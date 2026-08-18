@@ -2,7 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
 import { Overview } from './routes/Overview';
-import { WBudowie } from './routes/WBudowie';
+import { Kompensaty } from './routes/Kompensaty';
+import { Prolongaty } from './routes/Prolongaty';
+import { Wiekowanie } from './routes/Wiekowanie';
+import { Trend } from './routes/Trend';
+import { Rozrachunki } from './routes/Rozrachunki';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,11 +23,11 @@ export default function App() {
         <Routes>
           <Route element={<AppShell />}>
             <Route index element={<Overview />} />
-            <Route path="/wiekowanie" element={<WBudowie nazwa="Wiekowanie" />} />
-            <Route path="/kompensaty" element={<WBudowie nazwa="Kompensaty" />} />
-            <Route path="/prolongaty" element={<WBudowie nazwa="Prolongaty" />} />
-            <Route path="/rozrachunki" element={<WBudowie nazwa="Rozrachunki" />} />
-            <Route path="/trend" element={<WBudowie nazwa="Trend" />} />
+            <Route path="/wiekowanie" element={<Wiekowanie />} />
+            <Route path="/kompensaty" element={<Kompensaty />} />
+            <Route path="/prolongaty" element={<Prolongaty />} />
+            <Route path="/rozrachunki" element={<Rozrachunki />} />
+            <Route path="/trend" element={<Trend />} />
           </Route>
         </Routes>
       </BrowserRouter>

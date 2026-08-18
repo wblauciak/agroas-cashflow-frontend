@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import type { KompensatyFile, Meta, OtwarteFile, ProlongatyFile, Snapshot, SnapshotIndex } from './types';
 
 const BASE_URL = import.meta.env.VITE_DATA_BASE_URL as string;
@@ -81,5 +81,17 @@ export function useSnapshot(data: string | undefined) {
     enabled: !!data,
     staleTime: Infinity,
     gcTime: Infinity,
+  });
+}
+
+/** Historia snapshotow - jeden fetch na dzien, wspoldzielone z useSnapshot przez ten sam queryKey. */
+export function useSnapshotHistory(daty: string[]) {
+  return useQueries({
+    queries: daty.map((data) => ({
+      queryKey: ['snapshot', data],
+      queryFn: () => pobierz<Snapshot>(`snapshots/${data}.json`),
+      staleTime: Infinity,
+      gcTime: Infinity,
+    })),
   });
 }
