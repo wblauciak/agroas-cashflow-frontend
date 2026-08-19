@@ -1,11 +1,13 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { BarChart3, ArrowLeftRight, Clock, LayoutDashboard, LineChart, Table2 } from 'lucide-react';
+import { BarChart3, ArrowLeftRight, Clock, CreditCard, LayoutDashboard, LineChart, Table2, Wallet } from 'lucide-react';
 import { useMeta } from '../lib/api';
 import { FreshnessBadge } from './FreshnessBadge';
 import { UzytkownikBadge } from './UzytkownikBadge';
 
 const NAWIGACJA = [
   { do: '/', etykieta: 'Przegląd', opis: 'Kluczowe wskaźniki na dziś', Ikona: LayoutDashboard },
+  { do: '/naleznosci', etykieta: 'Należności', opis: 'Rozbicie wg terminów i grup produktowych', Ikona: Wallet },
+  { do: '/zobowiazania', etykieta: 'Zobowiązania', opis: 'Rozbicie wg terminów i grup produktowych', Ikona: CreditCard },
   { do: '/wiekowanie', etykieta: 'Wiekowanie', opis: 'Rozkład terminów płatności', Ikona: BarChart3 },
   { do: '/kompensaty', etykieta: 'Kompensaty', opis: 'Potencjał potrąceń wzajemnych', Ikona: ArrowLeftRight },
   { do: '/prolongaty', etykieta: 'Prolongaty', opis: 'Skuteczność wydłużonych terminów', Ikona: Clock },

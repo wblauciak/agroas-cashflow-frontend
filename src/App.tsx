@@ -7,6 +7,8 @@ import { Prolongaty } from './routes/Prolongaty';
 import { Wiekowanie } from './routes/Wiekowanie';
 import { Trend } from './routes/Trend';
 import { Rozrachunki } from './routes/Rozrachunki';
+import { Naleznosci } from './routes/Naleznosci';
+import { Zobowiazania } from './routes/Zobowiazania';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,6 +25,8 @@ export default function App() {
         <Routes>
           <Route element={<AppShell />}>
             <Route index element={<Overview />} />
+            <Route path="/naleznosci" element={<Naleznosci />} />
+            <Route path="/zobowiazania" element={<Zobowiazania />} />
             <Route path="/wiekowanie" element={<Wiekowanie />} />
             <Route path="/kompensaty" element={<Kompensaty />} />
             <Route path="/prolongaty" element={<Prolongaty />} />
