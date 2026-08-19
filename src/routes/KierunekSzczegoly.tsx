@@ -77,21 +77,24 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
   const kolumny: Kolumna<Platnosc>[] = useMemo(
     () => [
       { id: 'kontrahent', naglowek: 'Kontrahent', wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz) },
-      { id: 'dok', naglowek: 'Dokument', wartosc: (r) => r.dok },
+      { id: 'dok', naglowek: 'Dokument', wartosc: (r) => r.dok, szerokosc: 160 },
       {
         id: 'branza',
         naglowek: 'Grupa produktowa',
         wartosc: (r) => (typeof r.branza === 'number' ? (branze[r.branza] ?? '—') : 'wielobranżowy'),
+        szerokosc: 170,
       },
-      { id: 'termin', naglowek: 'Termin', wartosc: (r) => r.termin, cell: (r) => formatujDni(r.termin) },
-      { id: 'dni', naglowek: 'Dni po terminie', wartosc: (r) => r.dni ?? 0 },
+      { id: 'termin', naglowek: 'Termin', wartosc: (r) => r.termin, cell: (r) => formatujDni(r.termin), szerokosc: 110, wyrownanie: 'prawo' },
+      { id: 'dni', naglowek: 'Dni po terminie', wartosc: (r) => r.dni ?? 0, szerokosc: 130, wyrownanie: 'prawo' },
       {
         id: 'pozostajePLN',
         naglowek: 'Pozostaje (PLN)',
         wartosc: (r) => r.pozostajePLN,
         cell: (r) => <span className="font-medium tabular-nums">{formatujPLN(r.pozostajePLN)}</span>,
+        szerokosc: 150,
+        wyrownanie: 'prawo',
       },
-      { id: 'formaPlatnosci', naglowek: 'Forma płatności', wartosc: (r) => r.formaPlatnosci },
+      { id: 'formaPlatnosci', naglowek: 'Forma płatności', wartosc: (r) => r.formaPlatnosci, szerokosc: 150 },
     ],
     [otwarte.data, branze],
   );

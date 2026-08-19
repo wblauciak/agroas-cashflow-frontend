@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Kolumna } from './SortableTable';
 
 const WYS_WIERSZA = 36;
@@ -44,15 +44,22 @@ export function VirtualTable<T>({
     setSortowanie((s) => (s.id === id ? { id, desc: !s.desc } : { id, desc: true }));
   }
 
+  function stylKolumny(k: Kolumna<T>): CSSProperties {
+    return k.szerokosc ? { flex: `0 0 ${k.szerokosc}px`, width: k.szerokosc } : { flex: '1 1 220px', minWidth: 220 };
+  }
+
   return (
     <div className="rounded-2xl border border-slate-200 shadow-sm dark:border-slate-800">
       <div className="overflow-x-auto">
-        <div className="flex min-w-max bg-slate-50 dark:bg-slate-900" style={{ borderBottom: '1px solid var(--chart-grid)' }}>
+        <div className="flex w-full bg-slate-50 dark:bg-slate-900" style={{ borderBottom: '1px solid var(--chart-grid)' }}>
           {kolumny.map((k) => (
             <div
               key={k.id}
               onClick={() => klikNaglowek(k.id)}
-              className="w-40 shrink-0 cursor-pointer select-none whitespace-nowrap px-3 py-2.5 text-left text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              style={stylKolumny(k)}
+              className={`cursor-pointer select-none overflow-hidden text-ellipsis whitespace-nowrap px-3 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 ${
+                k.wyrownanie === 'prawo' ? 'text-right' : 'text-left'
+              }`}
             >
               {k.naglowek}
               {sortowanie.id === k.id && <span aria-hidden> {sortowanie.desc ? '▼' : '▲'}</span>}
@@ -60,19 +67,25 @@ export function VirtualTable<T>({
           ))}
         </div>
         <div ref={parentRef} style={{ height: wysokoscKontenera, overflow: 'auto' }}>
-          <div style={{ height: virtualizer.getTotalSize(), position: 'relative', minWidth: 'max-content' }}>
+          <div style={{ height: virtualizer.getTotalSize(), position: 'relative', minWidth: '100%' }}>
             {virtualizer.getVirtualItems().map((vr) => {
               const row = posortowane[vr.index];
               return (
                 <div
                   key={wierszKlucz(row)}
-                  className={`absolute left-0 top-0 flex w-full min-w-max border-b border-slate-100 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-300 ${
+                  className={`absolute left-0 top-0 flex w-full border-b border-slate-100 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-300 ${
                     vr.index % 2 === 0 ? 'bg-white dark:bg-slate-950' : 'bg-slate-50/60 dark:bg-slate-900/40'
                   }`}
                   style={{ height: WYS_WIERSZA, transform: `translateY(${vr.start}px)` }}
                 >
                   {kolumny.map((k) => (
-                    <div key={k.id} className="flex w-40 shrink-0 items-center whitespace-nowrap px-3">
+                    <div
+                      key={k.id}
+                      style={stylKolumny(k)}
+                      className={`flex items-center overflow-hidden text-ellipsis whitespace-nowrap px-3 ${
+                        k.wyrownanie === 'prawo' ? 'justify-end' : ''
+                      }`}
+                    >
                       {(k.cell ? k.cell(row) : k.wartosc(row)) as ReactNode}
                     </div>
                   ))}
@@ -82,11 +95,15 @@ export function VirtualTable<T>({
           </div>
         </div>
         {podsumowanie && dane.length > 0 && (
-          <div
-            className="flex min-w-max border-t-2 border-slate-200 bg-slate-50 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          >
+          <div className="flex w-full border-t-2 border-slate-200 bg-slate-50 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
             {kolumny.map((k) => (
-              <div key={k.id} className="flex w-40 shrink-0 items-center whitespace-nowrap px-3 py-2.5">
+              <div
+                key={k.id}
+                style={stylKolumny(k)}
+                className={`flex items-center overflow-hidden text-ellipsis whitespace-nowrap px-3 py-2.5 ${
+                  k.wyrownanie === 'prawo' ? 'justify-end' : ''
+                }`}
+              >
                 {podsumowanie[k.id] ?? ''}
               </div>
             ))}

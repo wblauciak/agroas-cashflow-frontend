@@ -5,6 +5,10 @@ export interface Kolumna<T> {
   naglowek: string;
   wartosc: (row: T) => string | number | null;
   cell?: (row: T) => ReactNode;
+  /** Szerokosc w px (VirtualTable) - kolumny bez tego rosna, wypelniajac dostepna przestrzen. */
+  szerokosc?: number;
+  /** Wyrownanie do prawej - dla kolumn liczbowych/dat, zeby dobrze sie czytaly w kolumnie. */
+  wyrownanie?: 'prawo';
 }
 
 export function SortableTable<T>({
@@ -50,10 +54,12 @@ export function SortableTable<T>({
               <th
                 key={k.id}
                 onClick={() => klikNaglowek(k.id)}
-                className="cursor-pointer select-none whitespace-nowrap px-4 py-2.5 text-left font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                className={`cursor-pointer select-none whitespace-nowrap px-4 py-2.5 font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 ${
+                  k.wyrownanie === 'prawo' ? 'text-right' : 'text-left'
+                }`}
                 aria-sort={sortowanie.id === k.id ? (sortowanie.desc ? 'descending' : 'ascending') : 'none'}
               >
-                <span className="inline-flex items-center gap-1">
+                <span className={`inline-flex items-center gap-1 ${k.wyrownanie === 'prawo' ? 'flex-row-reverse' : ''}`}>
                   {k.naglowek}
                   {sortowanie.id === k.id && <span aria-hidden>{sortowanie.desc ? '▼' : '▲'}</span>}
                 </span>
@@ -69,7 +75,10 @@ export function SortableTable<T>({
               className={`bg-white dark:bg-slate-950 ${onKlikWiersza ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900' : ''}`}
             >
               {kolumny.map((k) => (
-                <td key={k.id} className="whitespace-nowrap px-4 py-2 text-slate-700 dark:text-slate-300">
+                <td
+                  key={k.id}
+                  className={`whitespace-nowrap px-4 py-2 text-slate-700 dark:text-slate-300 ${k.wyrownanie === 'prawo' ? 'text-right' : 'text-left'}`}
+                >
                   {k.cell ? k.cell(row) : k.wartosc(row)}
                 </td>
               ))}

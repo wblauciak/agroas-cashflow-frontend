@@ -53,11 +53,12 @@ export function Rozrachunki() {
   const kolumny: Kolumna<Platnosc>[] = useMemo(
     () => [
       { id: 'kontrahent', naglowek: 'Kontrahent', wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz) },
-      { id: 'dok', naglowek: 'Dokument', wartosc: (r) => r.dok },
+      { id: 'dok', naglowek: 'Dokument', wartosc: (r) => r.dok, szerokosc: 160 },
       {
         id: 'kierunek',
         naglowek: 'Kierunek',
         wartosc: (r) => r.kierunek,
+        szerokosc: 130,
         cell: (r) => (
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -70,17 +71,19 @@ export function Rozrachunki() {
           </span>
         ),
       },
-      { id: 'kategoria', naglowek: 'Kategoria', wartosc: (r) => r.kategoria },
-      { id: 'kubelek', naglowek: 'Kubełek', wartosc: (r) => r.kubelekLp, cell: (r) => KUBELEK_NAZWY[r.kubelekLp] },
-      { id: 'termin', naglowek: 'Termin', wartosc: (r) => r.termin, cell: (r) => formatujDni(r.termin) },
-      { id: 'dni', naglowek: 'Dni po terminie', wartosc: (r) => r.dni ?? 0 },
+      { id: 'kategoria', naglowek: 'Kategoria', wartosc: (r) => r.kategoria, szerokosc: 120 },
+      { id: 'kubelek', naglowek: 'Kubełek', wartosc: (r) => r.kubelekLp, cell: (r) => KUBELEK_NAZWY[r.kubelekLp], szerokosc: 130 },
+      { id: 'termin', naglowek: 'Termin', wartosc: (r) => r.termin, cell: (r) => formatujDni(r.termin), szerokosc: 110, wyrownanie: 'prawo' },
+      { id: 'dni', naglowek: 'Dni po terminie', wartosc: (r) => r.dni ?? 0, szerokosc: 130, wyrownanie: 'prawo' },
       {
         id: 'pozostajePLN',
         naglowek: 'Pozostaje (PLN)',
         wartosc: (r) => r.pozostajePLN,
         cell: (r) => <span className="font-medium tabular-nums">{formatujPLN(r.pozostajePLN)}</span>,
+        szerokosc: 150,
+        wyrownanie: 'prawo',
       },
-      { id: 'formaPlatnosci', naglowek: 'Forma płatności', wartosc: (r) => r.formaPlatnosci },
+      { id: 'formaPlatnosci', naglowek: 'Forma płatności', wartosc: (r) => r.formaPlatnosci, szerokosc: 150 },
     ],
     [otwarte.data],
   );
