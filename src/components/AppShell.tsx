@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useMeta } from '../lib/api';
 import { FreshnessBadge } from './FreshnessBadge';
+import { UzytkownikBadge } from './UzytkownikBadge';
 
 const NAWIGACJA = [
   { do: '/', etykieta: 'Przegląd' },
@@ -39,7 +40,10 @@ export function AppShell() {
               ))}
             </nav>
           </div>
-          {meta.data && <FreshnessBadge wygenerowano={meta.data.wygenerowano} />}
+          <div className="flex items-center gap-4">
+            {meta.data && <FreshnessBadge wygenerowano={meta.data.wygenerowano} />}
+            <UzytkownikBadge />
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-6 py-8">
