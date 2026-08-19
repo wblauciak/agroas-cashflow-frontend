@@ -78,6 +78,32 @@ export function Overview() {
     return { nal, zob };
   }, [otwarte.data]);
 
+  /**
+   * Horyzonty naleznosci liczone z pola `dni` (dni po terminie; ujemne = przed
+   * terminem), nie z kubelkow - kubelki maja "za >60 dni" jako jeden worek bez
+   * granicy przy 90/180, wiec do dluzszych horyzontow trzeba surowej daty.
+   * Kumulatywne: w180 zawiera w90, w90 zawiera w30 - kazdy kolejny to szersze okno.
+   */
+  const naleznosciHoryzont = useMemo(() => {
+    if (!otwarte.data) return null;
+    let w30 = 0;
+    let w90 = 0;
+    let w180 = 0;
+    let przeterminowanePowyzej30 = 0;
+    for (const r of otwarte.data.dane) {
+      const p = dekodujPlatnosc(r, otwarte.data.slowniki);
+      if (p.kategoria !== 'HANDLOWY' || p.kierunek !== 'NALEZNOSC' || p.dni === null) continue;
+      if (p.dni <= 0) {
+        if (p.dni >= -30) w30 += p.pozostajePLN;
+        if (p.dni >= -90) w90 += p.pozostajePLN;
+        if (p.dni >= -180) w180 += p.pozostajePLN;
+      } else if (p.dni > 30) {
+        przeterminowanePowyzej30 += p.pozostajePLN;
+      }
+    }
+    return { w30, w90, w180, przeterminowanePowyzej30 };
+  }, [otwarte.data]);
+
   if (isLoading) {
     return <div className="text-sm text-slate-500 dark:text-slate-400">Ładowanie danych…</div>;
   }
@@ -116,19 +142,31 @@ export function Overview() {
         <NaglowekSekcji ikona={Wallet} tytul="Należności" opis="Otwarte pozycje handlowe wobec AGROAS" kolor="blue" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
-            etykieta="Wymagalne w 30 dni"
-            wartosc={wymagalneW30Dni ? formatujPLN(wymagalneW30Dni.nal) : '…'}
-            ikona={CalendarCheck}
-            dymek="Suma z kubełków 'dziś' do 'za 15-30 dni' — realnie oczekiwany wpływ w najbliższym miesiącu. Bez pozycji już przeterminowanych (osobna karta) i bez tych, które wpłyną dopiero po 30 dniu."
-          />
-          <KpiCard
             etykieta="Razem otwarte"
             wartosc={formatujPLN(kpi.naleznosci.razem)}
             podpis={`${kpi.naleznosci.pozycji} pozycji`}
             ikona={Wallet}
           />
           <KpiCard
-            etykieta="Przeterminowane"
+            etykieta="Wymagane w 180 dniach"
+            wartosc={naleznosciHoryzont ? formatujPLN(naleznosciHoryzont.w180) : '…'}
+            ikona={CalendarCheck}
+            dymek="Wszystko, co ma termin płatności od dziś do 180 dni w przód (nie licząc już przeterminowanych). Zawiera w sobie kwoty z kart 90 i 30 dni — to szersze okno, nie osobny wycinek."
+          />
+          <KpiCard
+            etykieta="Wymagane w 90 dniach"
+            wartosc={naleznosciHoryzont ? formatujPLN(naleznosciHoryzont.w90) : '…'}
+            ikona={CalendarCheck}
+            dymek="Termin płatności od dziś do 90 dni w przód. Zawiera w sobie kwotę z karty 30 dni."
+          />
+          <KpiCard
+            etykieta="Wymagane w 30 dniach"
+            wartosc={naleznosciHoryzont ? formatujPLN(naleznosciHoryzont.w30) : '…'}
+            ikona={CalendarCheck}
+            dymek="Termin płatności od dziś do 30 dni w przód — realnie oczekiwany wpływ w najbliższym miesiącu. Bez pozycji już przeterminowanych (osobna karta)."
+          />
+          <KpiCard
+            etykieta="Przeterminowane (ogółem)"
             wartosc={formatujPLN(kpi.naleznosci.przeterminowane)}
             podpis={procent(kpi.naleznosci.przeterminowane, kpi.naleznosci.razem)}
             ton="zly"
@@ -136,18 +174,32 @@ export function Overview() {
             delta={w && deltaProcentowa(kpi.naleznosci.przeterminowane, w.naleznosci.przeterminowane, 'spadek')}
           />
           <KpiCard
+            etykieta="Przeterminowane powyżej 30 dni"
+            wartosc={naleznosciHoryzont ? formatujPLN(naleznosciHoryzont.przeterminowanePowyzej30) : '…'}
+            ton="zly"
+            ikona={TriangleAlert}
+            dymek="Część 'Przeterminowanych ogółem', która czeka na zapłatę już ponad miesiąc po terminie — im dłużej, tym mniej prawdopodobne dobrowolne rozliczenie."
+          />
+          <KpiCard
             etykieta="Luka do 30 dni"
             wartosc={formatujPLN(kpi.lukaDo30Dni)}
             ton={kpi.lukaDo30Dni < 0 ? 'zly' : 'dobry'}
             ikona={Gauge}
-            dymek="Wpływy należności w horyzoncie 30 dni minus wypływy zobowiązań w tym samym oknie, licząc też pozycje już przeterminowane po obu stronach. To łączna luka, nie sama strona należności."
+            dymek="Wpływy należności w horyzoncie 30 dni minus wypływy zobowiązań w tym samym oknie, licząc też pozycje już przeterminowane po obu stronach. To łączna luka firmy, nie sama strona należności."
+          />
+          <KpiCard
+            etykieta="Luka do 7 dni"
+            wartosc={formatujPLN(kpi.lukaDo7Dni)}
+            ton={kpi.lukaDo7Dni < 0 ? 'zly' : 'dobry'}
+            ikona={Gauge}
+            dymek="To samo co luka do 30 dni, tylko w oknie najbliższego tygodnia. Ujemna wartość znaczy, że w tym tygodniu wypływy przewyższają wpływy."
           />
         </div>
       </section>
 
       <section>
         <NaglowekSekcji ikona={CreditCard} tytul="Zobowiązania" opis="Otwarte pozycje handlowe AGROAS wobec dostawców" kolor="red" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <KpiCard
             etykieta="Wymagalne w 30 dni"
             wartosc={wymagalneW30Dni ? formatujPLN(wymagalneW30Dni.zob) : '…'}
@@ -167,13 +219,6 @@ export function Overview() {
             ton="zly"
             ikona={TriangleAlert}
             delta={w && deltaProcentowa(kpi.zobowiazania.przeterminowane, w.zobowiazania.przeterminowane, 'spadek')}
-          />
-          <KpiCard
-            etykieta="Luka do 7 dni"
-            wartosc={formatujPLN(kpi.lukaDo7Dni)}
-            ton={kpi.lukaDo7Dni < 0 ? 'zly' : 'dobry'}
-            ikona={Gauge}
-            dymek="Wpływy należności minus wypływy zobowiązań w oknie 7 dni, łącznie z pozycjami już przeterminowanymi. Ujemna wartość znaczy, że w tym tygodniu wypływy przewyższają wpływy."
           />
         </div>
       </section>
