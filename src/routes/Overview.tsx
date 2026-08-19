@@ -110,24 +110,30 @@ export function Overview() {
    */
   const naleznosciHoryzont = useMemo(() => {
     if (!otwarte.data) return null;
+    let w7 = 0;
     let w30 = 0;
     let w90 = 0;
     let w180 = 0;
+    let przeterminowanePowyzej14 = 0;
     let przeterminowanePowyzej30 = 0;
     const kolejne7Dni = new Array(7).fill(0) as number[];
     for (const r of otwarte.data.dane) {
       const p = dekodujPlatnosc(r, otwarte.data.slowniki);
       if (p.kategoria !== 'HANDLOWY' || p.kierunek !== 'NALEZNOSC' || p.dni === null) continue;
       if (p.dni <= 0) {
+        if (p.dni >= -6) {
+          w7 += p.pozostajePLN;
+          kolejne7Dni[-p.dni] += p.pozostajePLN;
+        }
         if (p.dni >= -30) w30 += p.pozostajePLN;
         if (p.dni >= -90) w90 += p.pozostajePLN;
         if (p.dni >= -180) w180 += p.pozostajePLN;
-        if (p.dni >= -6) kolejne7Dni[-p.dni] += p.pozostajePLN;
-      } else if (p.dni > 30) {
-        przeterminowanePowyzej30 += p.pozostajePLN;
+      } else {
+        if (p.dni > 14) przeterminowanePowyzej14 += p.pozostajePLN;
+        if (p.dni > 30) przeterminowanePowyzej30 += p.pozostajePLN;
       }
     }
-    return { w30, w90, w180, przeterminowanePowyzej30, kolejne7Dni };
+    return { w7, w30, w90, w180, przeterminowanePowyzej14, przeterminowanePowyzej30, kolejne7Dni };
   }, [otwarte.data]);
 
   if (isLoading) {
@@ -166,7 +172,7 @@ export function Overview() {
 
       <section>
         <NaglowekSekcji ikona={Wallet} tytul="Należności" opis="Otwarte pozycje handlowe wobec AGROAS" kolor="blue" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <KpiCard
             etykieta="Razem otwarte"
             wartosc={formatujPLN(kpi.naleznosci.razem)}
@@ -177,19 +183,25 @@ export function Overview() {
             etykieta="Wymagane w 180 dniach"
             wartosc={naleznosciHoryzont ? formatujPLN(naleznosciHoryzont.w180) : '…'}
             ikona={CalendarCheck}
-            dymek="Wszystko, co ma termin płatności od dziś do 180 dni w przód (nie licząc już przeterminowanych). Zawiera w sobie kwoty z kart 90 i 30 dni — to szersze okno, nie osobny wycinek."
+            dymek="Wszystko, co ma termin płatności od dziś do 180 dni w przód (nie licząc już przeterminowanych). Zawiera w sobie kwoty z kart 90, 30 i 7 dni — to szersze okno, nie osobny wycinek."
           />
           <KpiCard
             etykieta="Wymagane w 90 dniach"
             wartosc={naleznosciHoryzont ? formatujPLN(naleznosciHoryzont.w90) : '…'}
             ikona={CalendarCheck}
-            dymek="Termin płatności od dziś do 90 dni w przód. Zawiera w sobie kwotę z karty 30 dni."
+            dymek="Termin płatności od dziś do 90 dni w przód. Zawiera w sobie kwoty z kart 30 i 7 dni."
           />
           <KpiCard
             etykieta="Wymagane w 30 dniach"
             wartosc={naleznosciHoryzont ? formatujPLN(naleznosciHoryzont.w30) : '…'}
             ikona={CalendarCheck}
-            dymek="Termin płatności od dziś do 30 dni w przód — realnie oczekiwany wpływ w najbliższym miesiącu. Bez pozycji już przeterminowanych (osobna karta)."
+            dymek="Termin płatności od dziś do 30 dni w przód — realnie oczekiwany wpływ w najbliższym miesiącu. Zawiera kwotę z karty 7 dni. Bez pozycji już przeterminowanych (osobna karta)."
+          />
+          <KpiCard
+            etykieta="Wymagane w 7 dniach"
+            wartosc={naleznosciHoryzont ? formatujPLN(naleznosciHoryzont.w7) : '…'}
+            ikona={CalendarCheck}
+            dymek="Suma z paska 7 dni poniżej — to co realnie wpłynie w ciągu najbliższego tygodnia, dzień po dniu."
           />
         </div>
 
@@ -209,7 +221,7 @@ export function Overview() {
             })}
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <KpiCard
             etykieta="Przeterminowane (ogółem)"
             wartosc={formatujPLN(kpi.naleznosci.przeterminowane)}
@@ -219,11 +231,18 @@ export function Overview() {
             delta={w && deltaProcentowa(kpi.naleznosci.przeterminowane, w.naleznosci.przeterminowane, 'spadek')}
           />
           <KpiCard
+            etykieta="Przeterminowane powyżej 14 dni"
+            wartosc={naleznosciHoryzont ? formatujPLN(naleznosciHoryzont.przeterminowanePowyzej14) : '…'}
+            ton="zly"
+            ikona={TriangleAlert}
+            dymek="Część 'Przeterminowanych ogółem', która czeka na zapłatę już ponad dwa tygodnie po terminie."
+          />
+          <KpiCard
             etykieta="Przeterminowane powyżej 30 dni"
             wartosc={naleznosciHoryzont ? formatujPLN(naleznosciHoryzont.przeterminowanePowyzej30) : '…'}
             ton="zly"
             ikona={TriangleAlert}
-            dymek="Część 'Przeterminowanych ogółem', która czeka na zapłatę już ponad miesiąc po terminie — im dłużej, tym mniej prawdopodobne dobrowolne rozliczenie."
+            dymek="Część 'Przeterminowanych powyżej 14 dni', która czeka na zapłatę już ponad miesiąc po terminie — im dłużej, tym mniej prawdopodobne dobrowolne rozliczenie."
           />
           <KpiCard
             etykieta="Luka do 30 dni"
