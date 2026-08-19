@@ -66,9 +66,13 @@ export function KpiCard({
   return (
     <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
-          <span className="truncate">{etykieta}</span>
-          {dymek && <InfoTooltip>{dymek}</InfoTooltip>}
+        <div className="flex min-w-0 items-start gap-1.5 text-sm font-medium leading-snug text-slate-500 dark:text-slate-400">
+          <span>{etykieta}</span>
+          {dymek && (
+            <span className="mt-0.5 shrink-0">
+              <InfoTooltip>{dymek}</InfoTooltip>
+            </span>
+          )}
         </div>
         {Ikona && (
           <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${styl.plakietka}`}>
