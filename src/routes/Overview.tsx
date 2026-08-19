@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import { useMemo } from 'react';
-import { AlertCircle, CalendarClock, CalendarCheck, CreditCard, Gauge, Handshake, Scale, TriangleAlert, Wallet } from 'lucide-react';
+import { AlertCircle, CalendarClock, CalendarCheck, CreditCard, Handshake, Scale, TriangleAlert, Wallet } from 'lucide-react';
 import { useMeta, useOtwarte, useSnapshot, useSnapshotIndex } from '../lib/api';
 import { dekodujPlatnosc } from '../lib/decode';
 import { KpiCard, type Delta } from '../components/KpiCard';
@@ -11,13 +11,25 @@ interface Horyzont {
   w30: number;
   w90: number;
   w180: number;
+  przeterminowanePowyzej7: number;
   przeterminowanePowyzej14: number;
   przeterminowanePowyzej30: number;
+  przeterminowanePowyzej60: number;
   kolejne7Dni: number[];
 }
 
 function pustyHoryzont(): Horyzont {
-  return { w7: 0, w30: 0, w90: 0, w180: 0, przeterminowanePowyzej14: 0, przeterminowanePowyzej30: 0, kolejne7Dni: new Array(7).fill(0) };
+  return {
+    w7: 0,
+    w30: 0,
+    w90: 0,
+    w180: 0,
+    przeterminowanePowyzej7: 0,
+    przeterminowanePowyzej14: 0,
+    przeterminowanePowyzej30: 0,
+    przeterminowanePowyzej60: 0,
+    kolejne7Dni: new Array(7).fill(0),
+  };
 }
 
 function procent(czesc: number, calosc: number): string {
@@ -96,7 +108,6 @@ function SekcjaHoryzontow({
   horyzont,
   wygenerowano,
   delta,
-  children,
 }: {
   tytul: string;
   opis: string;
@@ -106,7 +117,6 @@ function SekcjaHoryzontow({
   horyzont: Horyzont | undefined;
   wygenerowano: string;
   delta: Delta | undefined;
-  children?: React.ReactNode;
 }) {
   return (
     <section>
@@ -158,20 +168,33 @@ function SekcjaHoryzontow({
           delta={delta}
         />
         <KpiCard
-          etykieta="Przeterminowane powyżej 14 dni"
-          wartosc={horyzont ? formatujPLN(horyzont.przeterminowanePowyzej14) : '…'}
+          etykieta="Przeterminowane powyżej 60 dni"
+          wartosc={horyzont ? formatujPLN(horyzont.przeterminowanePowyzej60) : '…'}
           ton="zly"
           ikona={TriangleAlert}
-          dymek="Część 'Przeterminowanych ogółem', która czeka na zapłatę już ponad dwa tygodnie po terminie."
+          dymek="Czeka na zapłatę już ponad dwa miesiące po terminie — najpoważniejsza część zaległości, kandydat do windykacji."
         />
         <KpiCard
           etykieta="Przeterminowane powyżej 30 dni"
           wartosc={horyzont ? formatujPLN(horyzont.przeterminowanePowyzej30) : '…'}
           ton="zly"
           ikona={TriangleAlert}
-          dymek="Część 'Przeterminowanych powyżej 14 dni', która czeka na zapłatę już ponad miesiąc po terminie — im dłużej, tym mniej prawdopodobne dobrowolne rozliczenie."
+          dymek="Część 'Przeterminowanych ogółem', która czeka na zapłatę już ponad miesiąc po terminie. Zawiera w sobie kwotę z karty powyżej 60 dni."
         />
-        {children}
+        <KpiCard
+          etykieta="Przeterminowane powyżej 14 dni"
+          wartosc={horyzont ? formatujPLN(horyzont.przeterminowanePowyzej14) : '…'}
+          ton="zly"
+          ikona={TriangleAlert}
+          dymek="Czeka na zapłatę już ponad dwa tygodnie po terminie. Zawiera w sobie kwotę z karty powyżej 30 dni."
+        />
+        <KpiCard
+          etykieta="Przeterminowane powyżej 7 dni"
+          wartosc={horyzont ? formatujPLN(horyzont.przeterminowanePowyzej7) : '…'}
+          ton="zly"
+          ikona={TriangleAlert}
+          dymek="Czeka na zapłatę już ponad tydzień po terminie. Zawiera w sobie kwotę z karty powyżej 14 dni — najszersza z podkategorii przeterminowania."
+        />
       </div>
     </section>
   );
@@ -226,8 +249,10 @@ export function Overview() {
         if (p.dni >= -90) h.w90 += p.pozostajePLN;
         if (p.dni >= -180) h.w180 += p.pozostajePLN;
       } else {
+        if (p.dni > 7) h.przeterminowanePowyzej7 += p.pozostajePLN;
         if (p.dni > 14) h.przeterminowanePowyzej14 += p.pozostajePLN;
         if (p.dni > 30) h.przeterminowanePowyzej30 += p.pozostajePLN;
+        if (p.dni > 60) h.przeterminowanePowyzej60 += p.pozostajePLN;
       }
     }
     return { nal, zob };
@@ -276,22 +301,7 @@ export function Overview() {
         horyzont={horyzonty?.nal}
         wygenerowano={meta.wygenerowano}
         delta={w && deltaProcentowa(kpi.naleznosci.przeterminowane, w.naleznosci.przeterminowane, 'spadek')}
-      >
-        <KpiCard
-          etykieta="Luka do 30 dni"
-          wartosc={formatujPLN(kpi.lukaDo30Dni)}
-          ton={kpi.lukaDo30Dni < 0 ? 'zly' : 'dobry'}
-          ikona={Gauge}
-          dymek="Wpływy należności w horyzoncie 30 dni minus wypływy zobowiązań w tym samym oknie, licząc też pozycje już przeterminowane po obu stronach. To łączna luka firmy, nie sama strona należności."
-        />
-        <KpiCard
-          etykieta="Luka do 7 dni"
-          wartosc={formatujPLN(kpi.lukaDo7Dni)}
-          ton={kpi.lukaDo7Dni < 0 ? 'zly' : 'dobry'}
-          ikona={Gauge}
-          dymek="To samo co luka do 30 dni, tylko w oknie najbliższego tygodnia. Ujemna wartość znaczy, że w tym tygodniu wypływy przewyższają wpływy."
-        />
-      </SekcjaHoryzontow>
+      />
 
       <SekcjaHoryzontow
         tytul="Zobowiązania"
