@@ -1,9 +1,15 @@
 import type { ComponentType } from 'react';
 import { useMemo } from 'react';
-import { AlertCircle, CalendarClock, CreditCard, Gauge, Handshake, TriangleAlert, Wallet } from 'lucide-react';
-import { useMeta, useSnapshot, useSnapshotIndex } from '../lib/api';
+import { AlertCircle, CalendarCheck, CalendarClock, CreditCard, Gauge, Handshake, TriangleAlert, Wallet } from 'lucide-react';
+import { useMeta, useOtwarte, useSnapshot, useSnapshotIndex } from '../lib/api';
+import { dekodujPlatnosc } from '../lib/decode';
 import { KpiCard, type Delta } from '../components/KpiCard';
 import { formatujPLN } from '../lib/format';
+
+// Kubelki "dzis" (6) do "za 15-30" (9) - to co realnie wplynie/wyplynie w
+// najblizsze 30 dni. Przeterminowane (1-5) maja osobna karte; za >30 dni
+// (10-11) i brak terminu (0) nie sa tu "nadchodzace".
+const KUBELKI_30_DNI = [6, 7, 8, 9];
 
 function procent(czesc: number, calosc: number): string {
   if (calosc === 0) return '0%';
@@ -50,6 +56,7 @@ function NaglowekSekcji({
 export function Overview() {
   const { data: meta, isLoading, isError, error } = useMeta();
   const index = useSnapshotIndex();
+  const otwarte = useOtwarte(meta?.pliki.otwarte);
 
   const dataWczoraj = useMemo(() => {
     const dzis = meta?.wygenerowano.slice(0, 10);
@@ -57,6 +64,19 @@ export function Overview() {
     return daty[daty.length - 1];
   }, [index.data, meta?.wygenerowano]);
   const wczoraj = useSnapshot(dataWczoraj);
+
+  const wymagalneW30Dni = useMemo(() => {
+    if (!otwarte.data) return null;
+    let nal = 0;
+    let zob = 0;
+    for (const r of otwarte.data.dane) {
+      const p = dekodujPlatnosc(r, otwarte.data.slowniki);
+      if (p.kategoria !== 'HANDLOWY' || !KUBELKI_30_DNI.includes(p.kubelekLp)) continue;
+      if (p.kierunek === 'NALEZNOSC') nal += p.pozostajePLN;
+      else zob += p.pozostajePLN;
+    }
+    return { nal, zob };
+  }, [otwarte.data]);
 
   if (isLoading) {
     return <div className="text-sm text-slate-500 dark:text-slate-400">Ładowanie danych…</div>;
@@ -94,7 +114,13 @@ export function Overview() {
 
       <section>
         <NaglowekSekcji ikona={Wallet} tytul="Należności" opis="Otwarte pozycje handlowe wobec AGROAS" kolor="blue" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard
+            etykieta="Wymagalne w 30 dni"
+            wartosc={wymagalneW30Dni ? formatujPLN(wymagalneW30Dni.nal) : '…'}
+            ikona={CalendarCheck}
+            dymek="Suma z kubełków 'dziś' do 'za 15-30 dni' — realnie oczekiwany wpływ w najbliższym miesiącu. Bez pozycji już przeterminowanych (osobna karta) i bez tych, które wpłyną dopiero po 30 dniu."
+          />
           <KpiCard
             etykieta="Razem otwarte"
             wartosc={formatujPLN(kpi.naleznosci.razem)}
@@ -121,7 +147,13 @@ export function Overview() {
 
       <section>
         <NaglowekSekcji ikona={CreditCard} tytul="Zobowiązania" opis="Otwarte pozycje handlowe AGROAS wobec dostawców" kolor="red" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard
+            etykieta="Wymagalne w 30 dni"
+            wartosc={wymagalneW30Dni ? formatujPLN(wymagalneW30Dni.zob) : '…'}
+            ikona={CalendarCheck}
+            dymek="Suma z kubełków 'dziś' do 'za 15-30 dni' — realnie oczekiwany wypływ w najbliższym miesiącu. Bez pozycji już przeterminowanych (osobna karta) i bez tych, które wypłyną dopiero po 30 dniu."
+          />
           <KpiCard
             etykieta="Razem otwarte"
             wartosc={formatujPLN(kpi.zobowiazania.razem)}
