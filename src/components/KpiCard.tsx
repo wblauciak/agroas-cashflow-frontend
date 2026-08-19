@@ -76,11 +76,11 @@ export function KpiCard({
           </div>
         )}
       </div>
-      <div className={`mt-3 break-words text-2xl font-semibold leading-tight tracking-tight tabular-nums sm:text-3xl ${styl.tekst}`}>
+      <div className={`mt-3 overflow-hidden text-ellipsis whitespace-nowrap text-right text-xl font-semibold tracking-tight tabular-nums ${styl.tekst}`}>
         {wartosc}
       </div>
       {(podpis || delta) && (
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+        <div className="mt-2.5 flex flex-wrap items-center justify-end gap-1.5">
           {podpis && <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${styl.pigulka}`}>{podpis}</span>}
           {delta && <PigulkaDelty delta={delta} />}
         </div>

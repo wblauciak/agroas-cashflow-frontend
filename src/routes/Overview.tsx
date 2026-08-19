@@ -75,7 +75,7 @@ function DzienChip({ data, wartosc, dzisiaj }: { data: Date; wartosc: number; dz
       <div className={`text-xs ${weekend && !dzisiaj ? 'text-red-400 dark:text-red-500' : 'text-slate-400 dark:text-slate-500'}`}>
         {ETYKIETA_DATY.format(data)}
       </div>
-      <div className="mt-1.5 break-words text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+      <div className="mt-1.5 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
         {formatujPLN(wartosc)}
       </div>
     </div>
