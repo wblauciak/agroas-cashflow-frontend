@@ -11,10 +11,11 @@ interface Horyzont {
   w30: number;
   w90: number;
   w180: number;
-  przeterminowanePowyzej7: number;
-  przeterminowanePowyzej14: number;
+  /** Rozlaczne przedzialy przeterminowania - sumuja sie dokladnie do "ogolem". */
+  przeterminowaneDo7: number;
+  przeterminowaneDo14: number;
+  przeterminowaneDo30: number;
   przeterminowanePowyzej30: number;
-  przeterminowanePowyzej60: number;
   kolejne7Dni: number[];
 }
 
@@ -24,10 +25,10 @@ function pustyHoryzont(): Horyzont {
     w30: 0,
     w90: 0,
     w180: 0,
-    przeterminowanePowyzej7: 0,
-    przeterminowanePowyzej14: 0,
+    przeterminowaneDo7: 0,
+    przeterminowaneDo14: 0,
+    przeterminowaneDo30: 0,
     przeterminowanePowyzej30: 0,
-    przeterminowanePowyzej60: 0,
     kolejne7Dni: new Array(7).fill(0),
   };
 }
@@ -168,32 +169,32 @@ function SekcjaHoryzontow({
           delta={delta}
         />
         <KpiCard
-          etykieta="Przeterminowane powyżej 60 dni"
-          wartosc={horyzont ? formatujPLN(horyzont.przeterminowanePowyzej60) : '…'}
+          etykieta="Przeterminowane do 7 dni"
+          wartosc={horyzont ? formatujPLN(horyzont.przeterminowaneDo7) : '…'}
           ton="zly"
           ikona={TriangleAlert}
-          dymek="Czeka na zapłatę już ponad dwa miesiące po terminie — najpoważniejsza część zaległości, kandydat do windykacji."
+          dymek="Przeterminowane od 1 do 7 dni. Rozłączny przedział — te cztery karty sumują się dokładnie do 'Przeterminowanych ogółem'."
+        />
+        <KpiCard
+          etykieta="Przeterminowane do 14 dni"
+          wartosc={horyzont ? formatujPLN(horyzont.przeterminowaneDo14) : '…'}
+          ton="zly"
+          ikona={TriangleAlert}
+          dymek="Przeterminowane od 8 do 14 dni (bez tych z karty 'do 7 dni')."
+        />
+        <KpiCard
+          etykieta="Przeterminowane do 30 dni"
+          wartosc={horyzont ? formatujPLN(horyzont.przeterminowaneDo30) : '…'}
+          ton="zly"
+          ikona={TriangleAlert}
+          dymek="Przeterminowane od 15 do 30 dni (bez tych z kart 'do 7' i 'do 14 dni')."
         />
         <KpiCard
           etykieta="Przeterminowane powyżej 30 dni"
           wartosc={horyzont ? formatujPLN(horyzont.przeterminowanePowyzej30) : '…'}
           ton="zly"
           ikona={TriangleAlert}
-          dymek="Część 'Przeterminowanych ogółem', która czeka na zapłatę już ponad miesiąc po terminie. Zawiera w sobie kwotę z karty powyżej 60 dni."
-        />
-        <KpiCard
-          etykieta="Przeterminowane powyżej 14 dni"
-          wartosc={horyzont ? formatujPLN(horyzont.przeterminowanePowyzej14) : '…'}
-          ton="zly"
-          ikona={TriangleAlert}
-          dymek="Czeka na zapłatę już ponad dwa tygodnie po terminie. Zawiera w sobie kwotę z karty powyżej 30 dni."
-        />
-        <KpiCard
-          etykieta="Przeterminowane powyżej 7 dni"
-          wartosc={horyzont ? formatujPLN(horyzont.przeterminowanePowyzej7) : '…'}
-          ton="zly"
-          ikona={TriangleAlert}
-          dymek="Czeka na zapłatę już ponad tydzień po terminie. Zawiera w sobie kwotę z karty powyżej 14 dni — najszersza z podkategorii przeterminowania."
+          dymek="Ponad miesiąc po terminie — najpoważniejsza część zaległości, kandydat do windykacji."
         />
       </div>
     </section>
@@ -248,11 +249,14 @@ export function Overview() {
         if (p.dni >= -30) h.w30 += p.pozostajePLN;
         if (p.dni >= -90) h.w90 += p.pozostajePLN;
         if (p.dni >= -180) h.w180 += p.pozostajePLN;
+      } else if (p.dni <= 7) {
+        h.przeterminowaneDo7 += p.pozostajePLN;
+      } else if (p.dni <= 14) {
+        h.przeterminowaneDo14 += p.pozostajePLN;
+      } else if (p.dni <= 30) {
+        h.przeterminowaneDo30 += p.pozostajePLN;
       } else {
-        if (p.dni > 7) h.przeterminowanePowyzej7 += p.pozostajePLN;
-        if (p.dni > 14) h.przeterminowanePowyzej14 += p.pozostajePLN;
-        if (p.dni > 30) h.przeterminowanePowyzej30 += p.pozostajePLN;
-        if (p.dni > 60) h.przeterminowanePowyzej60 += p.pozostajePLN;
+        h.przeterminowanePowyzej30 += p.pozostajePLN;
       }
     }
     return { nal, zob };
@@ -323,11 +327,9 @@ export function Overview() {
           <SaldoCard etykieta="Saldo w 30 dniach" nal={horyzonty?.nal.w30} zob={horyzonty?.zob.w30} />
           <SaldoCard etykieta="Saldo w 7 dniach" nal={horyzonty?.nal.w7} zob={horyzonty?.zob.w7} />
           <SaldoCard etykieta="Przeterminowane (ogółem)" nal={kpi.naleznosci.przeterminowane} zob={kpi.zobowiazania.przeterminowane} />
-          <SaldoCard
-            etykieta="Przeterminowane powyżej 14 dni"
-            nal={horyzonty?.nal.przeterminowanePowyzej14}
-            zob={horyzonty?.zob.przeterminowanePowyzej14}
-          />
+          <SaldoCard etykieta="Przeterminowane do 7 dni" nal={horyzonty?.nal.przeterminowaneDo7} zob={horyzonty?.zob.przeterminowaneDo7} />
+          <SaldoCard etykieta="Przeterminowane do 14 dni" nal={horyzonty?.nal.przeterminowaneDo14} zob={horyzonty?.zob.przeterminowaneDo14} />
+          <SaldoCard etykieta="Przeterminowane do 30 dni" nal={horyzonty?.nal.przeterminowaneDo30} zob={horyzonty?.zob.przeterminowaneDo30} />
           <SaldoCard
             etykieta="Przeterminowane powyżej 30 dni"
             nal={horyzonty?.nal.przeterminowanePowyzej30}
