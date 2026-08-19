@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from 'react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { InfoTooltip } from './InfoTooltip';
 
 const TON_STYL = {
@@ -19,6 +20,30 @@ const TON_STYL = {
   },
 } as const;
 
+export interface Delta {
+  procent: number;
+  /** Ktory kierunek zmiany jest dobry - okresla kolor strzalki, nie sam znak liczby. */
+  dobryKierunek: 'wzrost' | 'spadek';
+  /** Etykieta okresu porownania, np. "vs wczoraj". */
+  okres: string;
+}
+
+function PigulkaDelty({ delta }: { delta: Delta }) {
+  const wzrost = delta.procent >= 0;
+  const dobry = wzrost === (delta.dobryKierunek === 'wzrost');
+  const klasy = dobry
+    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+    : 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
+  const Strzalka = wzrost ? ArrowUp : ArrowDown;
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${klasy}`}>
+      <Strzalka size={12} strokeWidth={2.5} />
+      {Math.abs(delta.procent).toFixed(1)}% <span className="font-normal opacity-80">{delta.okres}</span>
+    </span>
+  );
+}
+
 export function KpiCard({
   etykieta,
   wartosc,
@@ -26,6 +51,7 @@ export function KpiCard({
   ton = 'neutralny',
   dymek,
   ikona: Ikona,
+  delta,
 }: {
   etykieta: string;
   wartosc: string;
@@ -33,6 +59,7 @@ export function KpiCard({
   ton?: 'neutralny' | 'dobry' | 'zly';
   dymek?: ReactNode;
   ikona?: ComponentType<{ size?: number; strokeWidth?: number }>;
+  delta?: Delta;
 }) {
   const styl = TON_STYL[ton];
 
@@ -50,9 +77,10 @@ export function KpiCard({
         )}
       </div>
       <div className={`mt-3 text-3xl font-semibold tracking-tight tabular-nums ${styl.tekst}`}>{wartosc}</div>
-      {podpis && (
-        <div className="mt-2.5">
-          <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${styl.pigulka}`}>{podpis}</span>
+      {(podpis || delta) && (
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          {podpis && <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${styl.pigulka}`}>{podpis}</span>}
+          {delta && <PigulkaDelty delta={delta} />}
         </div>
       )}
     </div>

@@ -1,12 +1,20 @@
 import type { ComponentType } from 'react';
+import { useMemo } from 'react';
 import { AlertCircle, CalendarClock, CreditCard, Gauge, Handshake, TriangleAlert, Wallet } from 'lucide-react';
-import { useMeta } from '../lib/api';
-import { KpiCard } from '../components/KpiCard';
+import { useMeta, useSnapshot, useSnapshotIndex } from '../lib/api';
+import { KpiCard, type Delta } from '../components/KpiCard';
 import { formatujPLN } from '../lib/format';
 
 function procent(czesc: number, calosc: number): string {
   if (calosc === 0) return '0%';
   return `${((czesc / calosc) * 100).toFixed(1)}%`;
+}
+
+function deltaProcentowa(dzis: number, wczoraj: number, dobryKierunek: Delta['dobryKierunek']): Delta | undefined {
+  if (wczoraj === 0) return undefined;
+  const procent = ((dzis - wczoraj) / wczoraj) * 100;
+  if (!Number.isFinite(procent)) return undefined;
+  return { procent, dobryKierunek, okres: 'vs wczoraj' };
 }
 
 function NaglowekSekcji({
@@ -41,6 +49,14 @@ function NaglowekSekcji({
 
 export function Overview() {
   const { data: meta, isLoading, isError, error } = useMeta();
+  const index = useSnapshotIndex();
+
+  const dataWczoraj = useMemo(() => {
+    const dzis = meta?.wygenerowano.slice(0, 10);
+    const daty = (index.data?.daty ?? []).filter((d) => !dzis || d < dzis).sort();
+    return daty[daty.length - 1];
+  }, [index.data, meta?.wygenerowano]);
+  const wczoraj = useSnapshot(dataWczoraj);
 
   if (isLoading) {
     return <div className="text-sm text-slate-500 dark:text-slate-400">Ładowanie danych…</div>;
@@ -55,6 +71,7 @@ export function Overview() {
   }
 
   const { kpi } = meta;
+  const w = wczoraj.data;
 
   return (
     <div className="space-y-10">
@@ -90,6 +107,7 @@ export function Overview() {
             podpis={procent(kpi.naleznosci.przeterminowane, kpi.naleznosci.razem)}
             ton="zly"
             ikona={TriangleAlert}
+            delta={w && deltaProcentowa(kpi.naleznosci.przeterminowane, w.naleznosci.przeterminowane, 'spadek')}
           />
           <KpiCard
             etykieta="Luka do 30 dni"
@@ -116,6 +134,7 @@ export function Overview() {
             podpis={procent(kpi.zobowiazania.przeterminowane, kpi.zobowiazania.razem)}
             ton="zly"
             ikona={TriangleAlert}
+            delta={w && deltaProcentowa(kpi.zobowiazania.przeterminowane, w.zobowiazania.przeterminowane, 'spadek')}
           />
           <KpiCard
             etykieta="Luka do 7 dni"
@@ -137,7 +156,13 @@ export function Overview() {
             ikona={CalendarClock}
             dymek="Potencjał kompensaty, który realnie da się rozliczyć w ciągu 30 dni — nie cały potencjał łączny, którego duża część zapada dopiero za miesiące."
           />
-          <KpiCard etykieta="Wymagalne dziś" wartosc={formatujPLN(kpi.kompensatyWymagalne)} ton="zly" ikona={AlertCircle} />
+          <KpiCard
+            etykieta="Wymagalne dziś"
+            wartosc={formatujPLN(kpi.kompensatyWymagalne)}
+            ton="zly"
+            ikona={AlertCircle}
+            delta={w && deltaProcentowa(kpi.kompensatyWymagalne, w.kompensaty.wymagalne, 'spadek')}
+          />
         </div>
       </section>
     </div>
