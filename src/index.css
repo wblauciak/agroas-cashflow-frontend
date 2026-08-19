@@ -12,6 +12,13 @@
   --chart-axis: #c3c2b7;
   --chart-ink-secondary: #52514e;
   --chart-ink-muted: #898781;
+
+  /* Akcent marki - ten sam niebieski co naleznosci na wykresach, uzyty w calym UI */
+  --accent: #2a78d6;
+  --accent-hover: #185fa5;
+  --accent-tint: #e6f1fb;
+  --accent-ink: #185fa5;
+  --accent-ring: rgba(42, 120, 214, 0.35);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,6 +31,12 @@
     --chart-axis: #383835;
     --chart-ink-secondary: #c3c2b7;
     --chart-ink-muted: #898781;
+
+    --accent: #3987e5;
+    --accent-hover: #5598e7;
+    --accent-tint: rgba(57, 135, 229, 0.16);
+    --accent-ink: #86b6ef;
+    --accent-ring: rgba(57, 135, 229, 0.45);
   }
 }
 
@@ -36,10 +49,24 @@
   --chart-axis: #383835;
   --chart-ink-secondary: #c3c2b7;
   --chart-ink-muted: #898781;
+
+  --accent: #3987e5;
+  --accent-hover: #5598e7;
+  --accent-tint: rgba(57, 135, 229, 0.16);
+  --accent-ink: #86b6ef;
+  --accent-ring: rgba(57, 135, 229, 0.45);
 }
 
 body {
   margin: 0;
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-feature-settings: "tnum" 1, "cv11" 1;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Download } from 'lucide-react';
 import { useMeta, useOtwarte } from '../lib/api';
 import { dekodujPlatnosc } from '../lib/decode';
 import type { Platnosc } from '../lib/types';
@@ -57,7 +58,17 @@ export function Rozrachunki() {
         id: 'kierunek',
         naglowek: 'Kierunek',
         wartosc: (r) => r.kierunek,
-        cell: (r) => (r.kierunek === 'NALEZNOSC' ? 'Należność' : 'Zobowiązanie'),
+        cell: (r) => (
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+              r.kierunek === 'NALEZNOSC'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                : 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300'
+            }`}
+          >
+            {r.kierunek === 'NALEZNOSC' ? 'Należność' : 'Zobowiązanie'}
+          </span>
+        ),
       },
       { id: 'kategoria', naglowek: 'Kategoria', wartosc: (r) => r.kategoria },
       { id: 'kubelek', naglowek: 'Kubełek', wartosc: (r) => r.kubelekLp, cell: (r) => KUBELEK_NAZWY[r.kubelekLp] },
@@ -93,8 +104,12 @@ export function Rozrachunki() {
         <p className="text-sm text-slate-500 dark:text-slate-400">{przefiltrowane.length} z {wszystkiePlatnosci.length} pozycji</p>
         <button
           onClick={eksportujCsv}
-          className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+          className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+          style={{ background: 'var(--accent)' }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
         >
+          <Download size={16} strokeWidth={2} />
           Eksportuj CSV
         </button>
       </div>

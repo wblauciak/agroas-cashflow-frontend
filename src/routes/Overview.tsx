@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react';
 import { AlertCircle, CalendarClock, CreditCard, Gauge, Handshake, TriangleAlert, Wallet } from 'lucide-react';
 import { useMeta } from '../lib/api';
 import { KpiCard } from '../components/KpiCard';
@@ -6,6 +7,36 @@ import { formatujPLN } from '../lib/format';
 function procent(czesc: number, calosc: number): string {
   if (calosc === 0) return '0%';
   return `${((czesc / calosc) * 100).toFixed(1)}%`;
+}
+
+function NaglowekSekcji({
+  ikona: Ikona,
+  tytul,
+  opis,
+  kolor,
+}: {
+  ikona: ComponentType<{ size?: number; strokeWidth?: number }>;
+  tytul: string;
+  opis: string;
+  kolor: 'blue' | 'red' | 'violet';
+}) {
+  const klasy = {
+    blue: 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400',
+    red: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
+    violet: 'bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400',
+  }[kolor];
+
+  return (
+    <div className="mb-4 flex items-center gap-3">
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${klasy}`}>
+        <Ikona size={20} strokeWidth={2} />
+      </div>
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{tytul}</h2>
+        <p className="text-sm text-slate-400 dark:text-slate-500">{opis}</p>
+      </div>
+    </div>
+  );
 }
 
 export function Overview() {
@@ -26,10 +57,12 @@ export function Overview() {
   const { kpi } = meta;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {kpi.prolongatyPoziom3Plus > 0 && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-sm dark:border-amber-800 dark:bg-amber-950">
-          <TriangleAlert size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" strokeWidth={2} />
+        <div className="flex items-start gap-4 rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-md dark:border-amber-800 dark:bg-amber-950">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+            <TriangleAlert size={20} strokeWidth={2} />
+          </div>
           <div>
             <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">
               Prolongaty poziomu 3+ — kandydaci do windykacji
@@ -43,9 +76,7 @@ export function Overview() {
       )}
 
       <section>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          Należności
-        </h2>
+        <NaglowekSekcji ikona={Wallet} tytul="Należności" opis="Otwarte pozycje handlowe wobec AGROAS" kolor="blue" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <KpiCard
             etykieta="Razem otwarte"
@@ -71,9 +102,7 @@ export function Overview() {
       </section>
 
       <section>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          Zobowiązania
-        </h2>
+        <NaglowekSekcji ikona={CreditCard} tytul="Zobowiązania" opis="Otwarte pozycje handlowe AGROAS wobec dostawców" kolor="red" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <KpiCard
             etykieta="Razem otwarte"
@@ -99,9 +128,7 @@ export function Overview() {
       </section>
 
       <section>
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          Kompensaty
-        </h2>
+        <NaglowekSekcji ikona={Handshake} tytul="Kompensaty" opis="Potencjał potrąceń wzajemnych z kontrahentami" kolor="violet" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <KpiCard etykieta="Potencjał łączny" wartosc={formatujPLN(kpi.kompensatyPotencjal)} ikona={Handshake} />
           <KpiCard
