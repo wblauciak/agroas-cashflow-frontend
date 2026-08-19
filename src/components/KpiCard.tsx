@@ -64,10 +64,10 @@ export function KpiCard({
   const styl = TON_STYL[ton];
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
-          {etykieta}
+    <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
+          <span className="truncate">{etykieta}</span>
           {dymek && <InfoTooltip>{dymek}</InfoTooltip>}
         </div>
         {Ikona && (
@@ -76,7 +76,9 @@ export function KpiCard({
           </div>
         )}
       </div>
-      <div className={`mt-3 text-3xl font-semibold tracking-tight tabular-nums ${styl.tekst}`}>{wartosc}</div>
+      <div className={`mt-3 break-words text-2xl font-semibold leading-tight tracking-tight tabular-nums sm:text-3xl ${styl.tekst}`}>
+        {wartosc}
+      </div>
       {(podpis || delta) && (
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
           {podpis && <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${styl.pigulka}`}>{podpis}</span>}

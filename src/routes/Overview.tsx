@@ -49,20 +49,33 @@ const ETYKIETA_DNIA = new Intl.DateTimeFormat('pl-PL', { weekday: 'short' });
 const ETYKIETA_DATY = new Intl.DateTimeFormat('pl-PL', { day: '2-digit', month: '2-digit' });
 
 function DzienChip({ data, wartosc, dzisiaj }: { data: Date; wartosc: number; dzisiaj: boolean }) {
+  const dzienTygodnia = data.getDay();
+  const weekend = dzienTygodnia === 0 || dzienTygodnia === 6;
+
   return (
     <div
       className={`rounded-xl border p-3 text-center ${
         dzisiaj
           ? 'border-transparent shadow-sm'
-          : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
+          : weekend
+            ? 'border-red-100 bg-red-50 dark:border-red-900 dark:bg-red-950/40'
+            : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
       }`}
       style={dzisiaj ? { background: 'var(--accent-tint)' } : undefined}
+      title={weekend ? 'Dzień wolny — banki nie księgują, kwota realnie rozliczy się w sąsiedni dzień roboczy' : undefined}
     >
-      <div className={`text-xs font-medium uppercase ${dzisiaj ? '' : 'text-slate-400 dark:text-slate-500'}`} style={dzisiaj ? { color: 'var(--accent-ink)' } : undefined}>
+      <div
+        className={`text-xs font-medium uppercase ${
+          dzisiaj ? '' : weekend ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-slate-500'
+        }`}
+        style={dzisiaj ? { color: 'var(--accent-ink)' } : undefined}
+      >
         {dzisiaj ? 'Dziś' : ETYKIETA_DNIA.format(data)}
       </div>
-      <div className="text-xs text-slate-400 dark:text-slate-500">{ETYKIETA_DATY.format(data)}</div>
-      <div className="mt-1.5 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+      <div className={`text-xs ${weekend && !dzisiaj ? 'text-red-400 dark:text-red-500' : 'text-slate-400 dark:text-slate-500'}`}>
+        {ETYKIETA_DATY.format(data)}
+      </div>
+      <div className="mt-1.5 break-words text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
         {formatujPLN(wartosc)}
       </div>
     </div>
