@@ -23,6 +23,30 @@ function deltaProcentowa(dzis: number, wczoraj: number, dobryKierunek: Delta['do
   return { procent, dobryKierunek, okres: 'vs wczoraj' };
 }
 
+const ETYKIETA_DNIA = new Intl.DateTimeFormat('pl-PL', { weekday: 'short' });
+const ETYKIETA_DATY = new Intl.DateTimeFormat('pl-PL', { day: '2-digit', month: '2-digit' });
+
+function DzienChip({ data, wartosc, dzisiaj }: { data: Date; wartosc: number; dzisiaj: boolean }) {
+  return (
+    <div
+      className={`rounded-xl border p-3 text-center ${
+        dzisiaj
+          ? 'border-transparent shadow-sm'
+          : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
+      }`}
+      style={dzisiaj ? { background: 'var(--accent-tint)' } : undefined}
+    >
+      <div className={`text-xs font-medium uppercase ${dzisiaj ? '' : 'text-slate-400 dark:text-slate-500'}`} style={dzisiaj ? { color: 'var(--accent-ink)' } : undefined}>
+        {dzisiaj ? 'Dziś' : ETYKIETA_DNIA.format(data)}
+      </div>
+      <div className="text-xs text-slate-400 dark:text-slate-500">{ETYKIETA_DATY.format(data)}</div>
+      <div className="mt-1.5 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+        {formatujPLN(wartosc)}
+      </div>
+    </div>
+  );
+}
+
 function NaglowekSekcji({
   ikona: Ikona,
   tytul,
@@ -90,6 +114,7 @@ export function Overview() {
     let w90 = 0;
     let w180 = 0;
     let przeterminowanePowyzej30 = 0;
+    const kolejne7Dni = new Array(7).fill(0) as number[];
     for (const r of otwarte.data.dane) {
       const p = dekodujPlatnosc(r, otwarte.data.slowniki);
       if (p.kategoria !== 'HANDLOWY' || p.kierunek !== 'NALEZNOSC' || p.dni === null) continue;
@@ -97,11 +122,12 @@ export function Overview() {
         if (p.dni >= -30) w30 += p.pozostajePLN;
         if (p.dni >= -90) w90 += p.pozostajePLN;
         if (p.dni >= -180) w180 += p.pozostajePLN;
+        if (p.dni >= -6) kolejne7Dni[-p.dni] += p.pozostajePLN;
       } else if (p.dni > 30) {
         przeterminowanePowyzej30 += p.pozostajePLN;
       }
     }
-    return { w30, w90, w180, przeterminowanePowyzej30 };
+    return { w30, w90, w180, przeterminowanePowyzej30, kolejne7Dni };
   }, [otwarte.data]);
 
   if (isLoading) {
@@ -165,6 +191,25 @@ export function Overview() {
             ikona={CalendarCheck}
             dymek="Termin płatności od dziś do 30 dni w przód — realnie oczekiwany wpływ w najbliższym miesiącu. Bez pozycji już przeterminowanych (osobna karta)."
           />
+        </div>
+
+        <div className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-7">
+          {naleznosciHoryzont &&
+            Array.from({ length: 7 }, (_, offset) => {
+              const data = new Date(meta.wygenerowano);
+              data.setDate(data.getDate() + offset);
+              return (
+                <DzienChip
+                  key={offset}
+                  data={data}
+                  wartosc={naleznosciHoryzont.kolejne7Dni[offset]}
+                  dzisiaj={offset === 0}
+                />
+              );
+            })}
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             etykieta="Przeterminowane (ogółem)"
             wartosc={formatujPLN(kpi.naleznosci.przeterminowane)}
