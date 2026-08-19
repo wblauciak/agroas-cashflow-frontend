@@ -1,8 +1,10 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import type { Kolumna } from './SortableTable';
 
 const WYS_WIERSZA = 36;
+const MIN_SZEROKOSC = 70;
+const DOMYSLNA_SZEROKOSC_ROSNACEJ = 220;
 
 export function VirtualTable<T>({
   dane,
@@ -21,6 +23,10 @@ export function VirtualTable<T>({
   podsumowanie?: Partial<Record<string, ReactNode>>;
 }) {
   const [sortowanie, setSortowanie] = useState(domyslneSortowanie);
+  // Uzytkownik moze recznie przeciagnac szerokosc kolumny (jak w Excelu) - nadpisuje wtedy `szerokosc`/auto-wzrost.
+  const [nadpisaneSzerokosci, setNadpisaneSzerokosci] = useState<Record<string, number>>({});
+  const naglowkiRef = useRef<Record<string, HTMLDivElement | null>>({});
+
   const kolumna = kolumny.find((k) => k.id === sortowanie.id);
 
   const posortowane = kolumna
@@ -45,7 +51,27 @@ export function VirtualTable<T>({
   }
 
   function stylKolumny(k: Kolumna<T>): CSSProperties {
+    const nadpisana = nadpisaneSzerokosci[k.id];
+    if (nadpisana) return { flex: `0 0 ${nadpisana}px`, width: nadpisana };
     return k.szerokosc ? { flex: `0 0 ${k.szerokosc}px`, width: k.szerokosc } : { flex: '1 1 220px', minWidth: 220 };
+  }
+
+  function rozpocznijPrzeciaganie(e: ReactMouseEvent, id: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startSzerokosc = naglowkiRef.current[id]?.getBoundingClientRect().width ?? DOMYSLNA_SZEROKOSC_ROSNACEJ;
+
+    function naRuch(ev: MouseEvent) {
+      const nowa = Math.max(MIN_SZEROKOSC, Math.round(startSzerokosc + (ev.clientX - startX)));
+      setNadpisaneSzerokosci((s) => ({ ...s, [id]: nowa }));
+    }
+    function naPuszczenie() {
+      window.removeEventListener('mousemove', naRuch);
+      window.removeEventListener('mouseup', naPuszczenie);
+    }
+    window.addEventListener('mousemove', naRuch);
+    window.addEventListener('mouseup', naPuszczenie);
   }
 
   return (
@@ -55,14 +81,28 @@ export function VirtualTable<T>({
           {kolumny.map((k) => (
             <div
               key={k.id}
-              onClick={() => klikNaglowek(k.id)}
+              ref={(el) => {
+                naglowkiRef.current[k.id] = el;
+              }}
               style={stylKolumny(k)}
-              className={`cursor-pointer select-none overflow-hidden text-ellipsis whitespace-nowrap px-3 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 ${
-                k.wyrownanie === 'prawo' ? 'text-right' : 'text-left'
-              }`}
+              className="group relative"
             >
-              {k.naglowek}
-              {sortowanie.id === k.id && <span aria-hidden> {sortowanie.desc ? '▼' : '▲'}</span>}
+              <div
+                onClick={() => klikNaglowek(k.id)}
+                title={k.naglowek}
+                className={`cursor-pointer select-none overflow-hidden text-ellipsis whitespace-nowrap px-3 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 ${
+                  k.wyrownanie === 'prawo' ? 'text-right' : 'text-left'
+                }`}
+              >
+                {k.naglowek}
+                {sortowanie.id === k.id && <span aria-hidden> {sortowanie.desc ? '▼' : '▲'}</span>}
+              </div>
+              <div
+                onMouseDown={(e) => rozpocznijPrzeciaganie(e, k.id)}
+                onClick={(e) => e.stopPropagation()}
+                className="absolute right-0 top-0 z-10 h-full w-2 cursor-col-resize select-none opacity-0 hover:opacity-100 group-hover:opacity-40"
+                style={{ background: 'var(--accent)' }}
+              />
             </div>
           ))}
         </div>
@@ -78,17 +118,21 @@ export function VirtualTable<T>({
                   }`}
                   style={{ height: WYS_WIERSZA, transform: `translateY(${vr.start}px)` }}
                 >
-                  {kolumny.map((k) => (
-                    <div
-                      key={k.id}
-                      style={stylKolumny(k)}
-                      className={`flex items-center overflow-hidden text-ellipsis whitespace-nowrap px-3 ${
-                        k.wyrownanie === 'prawo' ? 'justify-end' : ''
-                      }`}
-                    >
-                      {(k.cell ? k.cell(row) : k.wartosc(row)) as ReactNode}
-                    </div>
-                  ))}
+                  {kolumny.map((k) => {
+                    const surowa = k.wartosc(row);
+                    return (
+                      <div
+                        key={k.id}
+                        style={stylKolumny(k)}
+                        title={surowa === null ? undefined : String(surowa)}
+                        className={`flex items-center overflow-hidden text-ellipsis whitespace-nowrap px-3 ${
+                          k.wyrownanie === 'prawo' ? 'justify-end' : ''
+                        }`}
+                      >
+                        {(k.cell ? k.cell(row) : surowa) as ReactNode}
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
