@@ -1,54 +1,60 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { BarChart3, ArrowLeftRight, Clock, LayoutDashboard, LineChart, Table2 } from 'lucide-react';
 import { useMeta } from '../lib/api';
 import { FreshnessBadge } from './FreshnessBadge';
 import { UzytkownikBadge } from './UzytkownikBadge';
 
 const NAWIGACJA = [
-  { do: '/', etykieta: 'Przegląd' },
-  { do: '/wiekowanie', etykieta: 'Wiekowanie' },
-  { do: '/kompensaty', etykieta: 'Kompensaty' },
-  { do: '/prolongaty', etykieta: 'Prolongaty' },
-  { do: '/rozrachunki', etykieta: 'Rozrachunki' },
-  { do: '/trend', etykieta: 'Trend' },
+  { do: '/', etykieta: 'Przegląd', Ikona: LayoutDashboard },
+  { do: '/wiekowanie', etykieta: 'Wiekowanie', Ikona: BarChart3 },
+  { do: '/kompensaty', etykieta: 'Kompensaty', Ikona: ArrowLeftRight },
+  { do: '/prolongaty', etykieta: 'Prolongaty', Ikona: Clock },
+  { do: '/rozrachunki', etykieta: 'Rozrachunki', Ikona: Table2 },
+  { do: '/trend', etykieta: 'Trend', Ikona: LineChart },
 ];
 
 export function AppShell() {
   const meta = useMeta();
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-8">
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">CashFlow AGROAS</h1>
-            <nav className="flex gap-1">
-              {NAWIGACJA.map((n) => (
-                <NavLink
-                  key={n.do}
-                  to={n.do}
-                  end={n.do === '/'}
-                  className={({ isActive }) =>
-                    `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-                    }`
-                  }
-                >
-                  {n.etykieta}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            {meta.data && <FreshnessBadge wygenerowano={meta.data.wygenerowano} />}
-            <UzytkownikBadge />
-          </div>
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+      <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="px-5 py-5">
+          <h1 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">CashFlow</h1>
+          <p className="text-xs text-slate-400 dark:text-slate-500">AGROAS</p>
         </div>
-      </header>
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <Outlet />
-      </main>
+        <nav className="flex flex-1 flex-col gap-0.5 px-3">
+          {NAWIGACJA.map(({ do: sciezka, etykieta, Ikona }) => (
+            <NavLink
+              key={sciezka}
+              to={sciezka}
+              end={sciezka === '/'}
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                    : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                }`
+              }
+            >
+              <Ikona size={17} strokeWidth={2} />
+              {etykieta}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="border-t border-slate-100 px-5 py-4 dark:border-slate-800">
+          <UzytkownikBadge />
+        </div>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-end border-b border-slate-200 bg-white px-6 py-3 dark:border-slate-800 dark:bg-slate-900">
+          {meta.data && <FreshnessBadge wygenerowano={meta.data.wygenerowano} />}
+        </header>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

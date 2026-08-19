@@ -50,7 +50,12 @@ export function Overview() {
             podpis={procent(kpi.naleznosci.przeterminowane, kpi.naleznosci.razem)}
             ton="zly"
           />
-          <KpiCard etykieta="Luka do 30 dni" wartosc={formatujPLN(kpi.lukaDo30Dni)} ton={kpi.lukaDo30Dni < 0 ? 'zly' : 'dobry'} />
+          <KpiCard
+            etykieta="Luka do 30 dni"
+            wartosc={formatujPLN(kpi.lukaDo30Dni)}
+            ton={kpi.lukaDo30Dni < 0 ? 'zly' : 'dobry'}
+            dymek="Wpływy należności w horyzoncie 30 dni minus wypływy zobowiązań w tym samym oknie, licząc też pozycje już przeterminowane po obu stronach. To łączna luka, nie sama strona należności."
+          />
         </div>
       </section>
 
@@ -66,7 +71,12 @@ export function Overview() {
             podpis={procent(kpi.zobowiazania.przeterminowane, kpi.zobowiazania.razem)}
             ton="zly"
           />
-          <KpiCard etykieta="Luka do 7 dni" wartosc={formatujPLN(kpi.lukaDo7Dni)} ton={kpi.lukaDo7Dni < 0 ? 'zly' : 'dobry'} />
+          <KpiCard
+            etykieta="Luka do 7 dni"
+            wartosc={formatujPLN(kpi.lukaDo7Dni)}
+            ton={kpi.lukaDo7Dni < 0 ? 'zly' : 'dobry'}
+            dymek="Wpływy należności minus wypływy zobowiązań w oknie 7 dni, łącznie z pozycjami już przeterminowanymi. Ujemna wartość znaczy, że w tym tygodniu wypływy przewyższają wpływy."
+          />
         </div>
       </section>
 
@@ -76,7 +86,11 @@ export function Overview() {
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <KpiCard etykieta="Potencjał łączny" wartosc={formatujPLN(kpi.kompensatyPotencjal)} />
-          <KpiCard etykieta="W horyzoncie 30 dni" wartosc={formatujPLN(kpi.kompensatyDo30Dni)} />
+          <KpiCard
+            etykieta="W horyzoncie 30 dni"
+            wartosc={formatujPLN(kpi.kompensatyDo30Dni)}
+            dymek="Potencjał kompensaty, który realnie da się rozliczyć w ciągu 30 dni — nie cały potencjał łączny, którego duża część zapada dopiero za miesiące."
+          />
           <KpiCard etykieta="Wymagalne dziś" wartosc={formatujPLN(kpi.kompensatyWymagalne)} ton="zly" />
         </div>
       </section>

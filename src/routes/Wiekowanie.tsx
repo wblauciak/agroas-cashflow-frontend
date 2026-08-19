@@ -91,7 +91,7 @@ export function Wiekowanie() {
         </label>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-[var(--chart-surface)] p-4 dark:border-slate-800">
+      <div className="rounded-2xl border border-slate-200 bg-[var(--chart-surface)] p-4 shadow-sm dark:border-slate-800">
         {/* Legenda */}
         <div className="mb-2 flex items-center gap-5 text-sm">
           <span className="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
@@ -188,7 +188,7 @@ export function Wiekowanie() {
       </div>
 
       {wybranyKubelek !== null && (
-        <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <div className="rounded-2xl border border-slate-200 p-4 shadow-sm dark:border-slate-800">
           <div className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
             Kubełek „{KUBELEK_ETYKIETY[wybranyKubelek]}" — daty z największą koncentracją
           </div>

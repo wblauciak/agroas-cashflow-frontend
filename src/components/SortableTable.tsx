@@ -42,7 +42,7 @@ export function SortableTable<T>({
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm dark:border-slate-800">
       <table className="w-full text-sm">
         <thead className="bg-slate-50 dark:bg-slate-900">
           <tr>

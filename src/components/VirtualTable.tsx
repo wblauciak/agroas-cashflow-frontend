@@ -10,12 +10,15 @@ export function VirtualTable<T>({
   domyslneSortowanie,
   wierszKlucz,
   wysokoscKontenera = 560,
+  podsumowanie,
 }: {
   dane: T[];
   kolumny: Kolumna<T>[];
   domyslneSortowanie: { id: string; desc: boolean };
   wierszKlucz: (row: T) => string | number;
   wysokoscKontenera?: number;
+  /** Wiersz sum/podsumowania pod tabela, kluczowany id kolumny. */
+  podsumowanie?: Partial<Record<string, ReactNode>>;
 }) {
   const [sortowanie, setSortowanie] = useState(domyslneSortowanie);
   const kolumna = kolumny.find((k) => k.id === sortowanie.id);
@@ -42,7 +45,7 @@ export function VirtualTable<T>({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800">
+    <div className="rounded-2xl border border-slate-200 shadow-sm dark:border-slate-800">
       <div className="overflow-x-auto">
         <div className="flex min-w-max bg-slate-50 dark:bg-slate-900" style={{ borderBottom: '1px solid var(--chart-grid)' }}>
           {kolumny.map((k) => (
@@ -63,7 +66,9 @@ export function VirtualTable<T>({
               return (
                 <div
                   key={wierszKlucz(row)}
-                  className="absolute left-0 top-0 flex w-full min-w-max border-b border-slate-100 bg-white text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
+                  className={`absolute left-0 top-0 flex w-full min-w-max border-b border-slate-100 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-300 ${
+                    vr.index % 2 === 0 ? 'bg-white dark:bg-slate-950' : 'bg-slate-50/60 dark:bg-slate-900/40'
+                  }`}
                   style={{ height: WYS_WIERSZA, transform: `translateY(${vr.start}px)` }}
                 >
                   {kolumny.map((k) => (
@@ -76,6 +81,17 @@ export function VirtualTable<T>({
             })}
           </div>
         </div>
+        {podsumowanie && dane.length > 0 && (
+          <div
+            className="flex min-w-max border-t-2 border-slate-200 bg-slate-50 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            {kolumny.map((k) => (
+              <div key={k.id} className="flex w-40 shrink-0 items-center whitespace-nowrap px-3 py-2.5">
+                {podsumowanie[k.id] ?? ''}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       {dane.length === 0 && (
         <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Brak wierszy spełniających filtry.</div>

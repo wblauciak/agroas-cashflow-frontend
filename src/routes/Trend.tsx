@@ -45,7 +45,7 @@ export function Trend() {
     return (
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Trend</h2>
-        <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
+        <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
           {snapshoty.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">Brak jeszcze żadnego snapshotu dziennego.</p>
           ) : (
@@ -100,7 +100,7 @@ export function Trend() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-[var(--chart-surface)] p-4 dark:border-slate-800">
+      <div className="rounded-2xl border border-slate-200 bg-[var(--chart-surface)] p-4 shadow-sm dark:border-slate-800">
         <div className="mb-2 flex items-center gap-5 text-sm">
           <span className="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
             <span className="inline-block h-0.5 w-4" style={{ background: 'var(--chart-nal)' }} />

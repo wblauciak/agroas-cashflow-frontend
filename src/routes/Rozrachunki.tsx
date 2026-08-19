@@ -74,6 +74,8 @@ export function Rozrachunki() {
     [otwarte.data],
   );
 
+  const sumaPozostaje = useMemo(() => przefiltrowane.reduce((s, r) => s + r.pozostajePLN, 0), [przefiltrowane]);
+
   if (meta.isLoading || otwarte.isLoading) return <StanZapytania stan="ladowanie" />;
   if (meta.isError || otwarte.isError) return <StanZapytania stan="blad" />;
 
@@ -100,7 +102,7 @@ export function Rozrachunki() {
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 p-3 shadow-sm dark:border-slate-800">
         <input
           type="text"
           placeholder="Szukaj: dokument, kontrahent…"
@@ -135,7 +137,16 @@ export function Rozrachunki() {
         </label>
       </div>
 
-      <VirtualTable dane={przefiltrowane} kolumny={kolumny} domyslneSortowanie={{ id: 'pozostajePLN', desc: true }} wierszKlucz={(r) => `${r.dokTyp}-${r.dokNumer}-${r.lp}`} />
+      <VirtualTable
+        dane={przefiltrowane}
+        kolumny={kolumny}
+        domyslneSortowanie={{ id: 'pozostajePLN', desc: true }}
+        wierszKlucz={(r) => `${r.dokTyp}-${r.dokNumer}-${r.lp}`}
+        podsumowanie={{
+          kontrahent: `Suma (${przefiltrowane.length} poz.)`,
+          pozostajePLN: formatujPLN(sumaPozostaje),
+        }}
+      />
     </div>
   );
 }
