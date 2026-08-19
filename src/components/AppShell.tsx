@@ -1,20 +1,22 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { BarChart3, ArrowLeftRight, Clock, LayoutDashboard, LineChart, Table2 } from 'lucide-react';
 import { useMeta } from '../lib/api';
 import { FreshnessBadge } from './FreshnessBadge';
 import { UzytkownikBadge } from './UzytkownikBadge';
 
 const NAWIGACJA = [
-  { do: '/', etykieta: 'Przegląd', Ikona: LayoutDashboard },
-  { do: '/wiekowanie', etykieta: 'Wiekowanie', Ikona: BarChart3 },
-  { do: '/kompensaty', etykieta: 'Kompensaty', Ikona: ArrowLeftRight },
-  { do: '/prolongaty', etykieta: 'Prolongaty', Ikona: Clock },
-  { do: '/rozrachunki', etykieta: 'Rozrachunki', Ikona: Table2 },
-  { do: '/trend', etykieta: 'Trend', Ikona: LineChart },
+  { do: '/', etykieta: 'Przegląd', opis: 'Kluczowe wskaźniki na dziś', Ikona: LayoutDashboard },
+  { do: '/wiekowanie', etykieta: 'Wiekowanie', opis: 'Rozkład terminów płatności', Ikona: BarChart3 },
+  { do: '/kompensaty', etykieta: 'Kompensaty', opis: 'Potencjał potrąceń wzajemnych', Ikona: ArrowLeftRight },
+  { do: '/prolongaty', etykieta: 'Prolongaty', opis: 'Skuteczność wydłużonych terminów', Ikona: Clock },
+  { do: '/rozrachunki', etykieta: 'Rozrachunki', opis: 'Pełna lista otwartych płatności', Ikona: Table2 },
+  { do: '/trend', etykieta: 'Trend', opis: 'Przeterminowanie w czasie', Ikona: LineChart },
 ];
 
 export function AppShell() {
   const meta = useMeta();
+  const location = useLocation();
+  const biezaca = NAWIGACJA.find((n) => (n.do === '/' ? location.pathname === '/' : location.pathname.startsWith(n.do))) ?? NAWIGACJA[0];
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -48,7 +50,11 @@ export function AppShell() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-end border-b border-slate-200 bg-white px-6 py-3 dark:border-slate-800 dark:bg-slate-900">
+        <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{biezaca.etykieta}</h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500">{biezaca.opis}</p>
+          </div>
           {meta.data && <FreshnessBadge wygenerowano={meta.data.wygenerowano} />}
         </header>
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">

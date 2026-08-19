@@ -79,12 +79,9 @@ export function Wiekowanie() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Wiekowanie</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Terminy są silnie skoncentrowane — kliknij kubełek, żeby zobaczyć, które konkretne daty go tworzą.
-          </p>
-        </div>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Terminy są silnie skoncentrowane — kliknij kubełek, żeby zobaczyć, które konkretne daty go tworzą.
+        </p>
         <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
           <input type="checkbox" checked={pokazWszystkie} onChange={(e) => setPokazWszystkie(e.target.checked)} />
           pokaż też PODATKI i KASA/BANK

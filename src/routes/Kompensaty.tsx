@@ -46,8 +46,7 @@ export function Kompensaty() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Kompensaty</h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           Domyślnie sortowane po potencjale w horyzoncie 30 dni — sortowanie po kwocie łącznej wypycha z góry
           podmioty, których saldo zapada dopiero za miesiące.
         </p>

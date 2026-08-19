@@ -90,10 +90,7 @@ export function Rozrachunki() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Rozrachunki</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{przefiltrowane.length} z {wszystkiePlatnosci.length} pozycji</p>
-        </div>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{przefiltrowane.length} z {wszystkiePlatnosci.length} pozycji</p>
         <button
           onClick={eksportujCsv}
           className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"

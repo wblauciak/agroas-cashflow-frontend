@@ -1,3 +1,4 @@
+import { AlertCircle, CalendarClock, CreditCard, Gauge, Handshake, TriangleAlert, Wallet } from 'lucide-react';
 import { useMeta } from '../lib/api';
 import { KpiCard } from '../components/KpiCard';
 import { formatujPLN } from '../lib/format';
@@ -25,73 +26,91 @@ export function Overview() {
   const { kpi } = meta;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {kpi.prolongatyPoziom3Plus > 0 && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-          <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-            Prolongaty poziomu 3+ — kandydaci do windykacji
-          </div>
-          <div className="mt-1 text-sm text-amber-800 dark:text-amber-300">
-            {kpi.prolongatyPozycji3Plus ?? '—'} płatności na {formatujPLN(kpi.prolongatyPoziom3Plus)} — od
-            trzeciego poziomu skuteczność prolongat statystycznie się załamuje. Nie kolejny PRG, tylko decyzja.
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-sm dark:border-amber-800 dark:bg-amber-950">
+          <TriangleAlert size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" strokeWidth={2} />
+          <div>
+            <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+              Prolongaty poziomu 3+ — kandydaci do windykacji
+            </div>
+            <div className="mt-1 text-sm text-amber-800 dark:text-amber-300">
+              {kpi.prolongatyPozycji3Plus ?? '—'} płatności na {formatujPLN(kpi.prolongatyPoziom3Plus)} — od
+              trzeciego poziomu skuteczność prolongat statystycznie się załamuje. Nie kolejny PRG, tylko decyzja.
+            </div>
           </div>
         </div>
       )}
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
           Należności
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <KpiCard etykieta="Razem otwarte" wartosc={formatujPLN(kpi.naleznosci.razem)} podpis={`${kpi.naleznosci.pozycji} pozycji`} />
+          <KpiCard
+            etykieta="Razem otwarte"
+            wartosc={formatujPLN(kpi.naleznosci.razem)}
+            podpis={`${kpi.naleznosci.pozycji} pozycji`}
+            ikona={Wallet}
+          />
           <KpiCard
             etykieta="Przeterminowane"
             wartosc={formatujPLN(kpi.naleznosci.przeterminowane)}
             podpis={procent(kpi.naleznosci.przeterminowane, kpi.naleznosci.razem)}
             ton="zly"
+            ikona={TriangleAlert}
           />
           <KpiCard
             etykieta="Luka do 30 dni"
             wartosc={formatujPLN(kpi.lukaDo30Dni)}
             ton={kpi.lukaDo30Dni < 0 ? 'zly' : 'dobry'}
+            ikona={Gauge}
             dymek="Wpływy należności w horyzoncie 30 dni minus wypływy zobowiązań w tym samym oknie, licząc też pozycje już przeterminowane po obu stronach. To łączna luka, nie sama strona należności."
           />
         </div>
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
           Zobowiązania
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <KpiCard etykieta="Razem otwarte" wartosc={formatujPLN(kpi.zobowiazania.razem)} podpis={`${kpi.zobowiazania.pozycji} pozycji`} />
+          <KpiCard
+            etykieta="Razem otwarte"
+            wartosc={formatujPLN(kpi.zobowiazania.razem)}
+            podpis={`${kpi.zobowiazania.pozycji} pozycji`}
+            ikona={CreditCard}
+          />
           <KpiCard
             etykieta="Przeterminowane"
             wartosc={formatujPLN(kpi.zobowiazania.przeterminowane)}
             podpis={procent(kpi.zobowiazania.przeterminowane, kpi.zobowiazania.razem)}
             ton="zly"
+            ikona={TriangleAlert}
           />
           <KpiCard
             etykieta="Luka do 7 dni"
             wartosc={formatujPLN(kpi.lukaDo7Dni)}
             ton={kpi.lukaDo7Dni < 0 ? 'zly' : 'dobry'}
+            ikona={Gauge}
             dymek="Wpływy należności minus wypływy zobowiązań w oknie 7 dni, łącznie z pozycjami już przeterminowanymi. Ujemna wartość znaczy, że w tym tygodniu wypływy przewyższają wpływy."
           />
         </div>
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
           Kompensaty
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <KpiCard etykieta="Potencjał łączny" wartosc={formatujPLN(kpi.kompensatyPotencjal)} />
+          <KpiCard etykieta="Potencjał łączny" wartosc={formatujPLN(kpi.kompensatyPotencjal)} ikona={Handshake} />
           <KpiCard
             etykieta="W horyzoncie 30 dni"
             wartosc={formatujPLN(kpi.kompensatyDo30Dni)}
+            ikona={CalendarClock}
             dymek="Potencjał kompensaty, który realnie da się rozliczyć w ciągu 30 dni — nie cały potencjał łączny, którego duża część zapada dopiero za miesiące."
           />
-          <KpiCard etykieta="Wymagalne dziś" wartosc={formatujPLN(kpi.kompensatyWymagalne)} ton="zly" />
+          <KpiCard etykieta="Wymagalne dziś" wartosc={formatujPLN(kpi.kompensatyWymagalne)} ton="zly" ikona={AlertCircle} />
         </div>
       </section>
     </div>

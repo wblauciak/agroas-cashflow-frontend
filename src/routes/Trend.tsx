@@ -44,7 +44,6 @@ export function Trend() {
   if (snapshoty.length < 2) {
     return (
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Trend</h2>
         <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
           {snapshoty.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">Brak jeszcze żadnego snapshotu dziennego.</p>
