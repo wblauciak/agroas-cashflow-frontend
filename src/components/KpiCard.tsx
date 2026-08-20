@@ -35,13 +35,14 @@ const TON_STYL = {
     plakietka: 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300',
     pigulka: 'bg-white text-red-700 dark:bg-red-950 dark:text-red-300',
   },
-  /** Przeterminowane - swiadomie INNY odcien niz "zobowiazanie", zeby nie ginac
-      wsrod zwyklych czerwonych kart Zobowiazan (patrz feedback uzytkownika). */
+  /** Przeterminowane - swiadomie INNY odcien niz "zobowiazanie" (zeby nie ginac
+      wsrod zwyklych czerwonych kart Zobowiazan), ale bez podbarwionego tla -
+      na prosbe uzytkownika, zeby nie robilo sie za kolorowo. */
   ostrzezenie: {
-    karta: 'border-rose-200 bg-rose-50/70 dark:border-rose-900/60 dark:bg-rose-950/25',
+    karta: 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900',
     tekst: 'text-rose-600 dark:text-rose-400',
-    plakietka: 'bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300',
-    pigulka: 'bg-white text-rose-700 dark:bg-rose-950 dark:text-rose-300',
+    plakietka: 'bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400',
+    pigulka: 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300',
   },
 } as const;
 
