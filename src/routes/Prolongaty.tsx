@@ -61,6 +61,7 @@ interface KontrahentRollup {
   maksPoziom: number;
   sumaProlongowana: number;
   sumaPozostaje: number;
+  sumaOdsetek: number;
 }
 
 export function Prolongaty() {
@@ -149,11 +150,13 @@ export function Prolongaty() {
   const kontrahenci = useMemo(() => {
     const mapa = new Map<number, KontrahentRollup>();
     for (const p of wgPoziomuIDaty) {
-      const w = mapa.get(p.kntKlucz) ?? { kntKlucz: p.kntKlucz, liczba: 0, maksPoziom: 0, sumaProlongowana: 0, sumaPozostaje: 0 };
+      const w =
+        mapa.get(p.kntKlucz) ?? { kntKlucz: p.kntKlucz, liczba: 0, maksPoziom: 0, sumaProlongowana: 0, sumaPozostaje: 0, sumaOdsetek: 0 };
       w.liczba += 1;
       w.maksPoziom = Math.max(w.maksPoziom, p.nrProlongaty);
       w.sumaProlongowana += p.kwotaProlongowana;
       w.sumaPozostaje += p.pozostajeDzis;
+      w.sumaOdsetek += p.kwotaOdsetek;
       mapa.set(p.kntKlucz, w);
     }
     return [...mapa.values()].sort((a, b) => b.sumaPozostaje - a.sumaPozostaje);
@@ -167,7 +170,7 @@ export function Prolongaty() {
   const kolumnyKontrahentow: Kolumna<KontrahentRollup>[] = useMemo(
     () => [
       { id: 'kontrahent', naglowek: 'Kontrahent', wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz) },
-      { id: 'liczba', naglowek: 'Prolongat', wartosc: (r) => r.liczba, wyrownanie: 'prawo' },
+      { id: 'liczba', naglowek: 'Pozycji', wartosc: (r) => r.liczba, wyrownanie: 'prawo' },
       { id: 'maksPoziom', naglowek: 'Maks. poziom', wartosc: (r) => r.maksPoziom, cell: (r) => <PoziomBadge nr={r.maksPoziom} /> },
       {
         id: 'sumaProlongowana',
@@ -183,19 +186,36 @@ export function Prolongaty() {
         cell: (r) => <span className="font-semibold tabular-nums">{formatujPLN(r.sumaPozostaje)}</span>,
         wyrownanie: 'prawo',
       },
+      {
+        id: 'sumaOdsetek',
+        naglowek: 'Odsetki',
+        wartosc: (r) => r.sumaOdsetek,
+        cell: (r) => <span className="tabular-nums">{formatujPLN(r.sumaOdsetek)}</span>,
+        wyrownanie: 'prawo',
+      },
+      {
+        id: 'procentOdsetekKnt',
+        naglowek: '% odsetek',
+        wartosc: (r) => (r.sumaProlongowana !== 0 ? (r.sumaOdsetek / r.sumaProlongowana) * 100 : -1),
+        cell: (r) => (r.sumaProlongowana !== 0 ? `${((r.sumaOdsetek / r.sumaProlongowana) * 100).toFixed(1)}%` : '—'),
+        wyrownanie: 'prawo',
+      },
     ],
     [otwarte.data],
   );
 
-  const podsumowanieKontrahentow = useMemo(
-    () => ({
+  const podsumowanieKontrahentow = useMemo(() => {
+    const sumaProlongowana = kontrahenci.reduce((s, r) => s + r.sumaProlongowana, 0);
+    const sumaOdsetek = kontrahenci.reduce((s, r) => s + r.sumaOdsetek, 0);
+    return {
       kontrahent: `Suma (${kontrahenci.length} kontrahentów)`,
       liczba: kontrahenci.reduce((s, r) => s + r.liczba, 0),
-      sumaProlongowana: formatujPLN(kontrahenci.reduce((s, r) => s + r.sumaProlongowana, 0)),
+      sumaProlongowana: formatujPLN(sumaProlongowana),
       sumaPozostaje: formatujPLN(kontrahenci.reduce((s, r) => s + r.sumaPozostaje, 0)),
-    }),
-    [kontrahenci],
-  );
+      sumaOdsetek: formatujPLN(sumaOdsetek),
+      procentOdsetekKnt: sumaProlongowana !== 0 ? `${((sumaOdsetek / sumaProlongowana) * 100).toFixed(1)}%` : '—',
+    };
+  }, [kontrahenci]);
 
   const kolumnyDokumentow: Kolumna<Prolongata>[] = useMemo(
     () => [
@@ -203,7 +223,6 @@ export function Prolongaty() {
       { id: 'dok', naglowek: 'Dokument', wartosc: (r) => r.dok },
       { id: 'dokZrodlowy', naglowek: 'Dokument źródłowy', wartosc: (r) => r.dokZrodlowy ?? '—' },
       { id: 'nrProlongaty', naglowek: 'Poziom', wartosc: (r) => r.nrProlongaty, cell: (r) => <PoziomBadge nr={r.nrProlongaty} /> },
-      { id: 'rata', naglowek: 'Rata', wartosc: (r) => r.rata, wyrownanie: 'prawo' },
       {
         id: 'terminPierwotny',
         naglowek: 'Termin pierwotny',
