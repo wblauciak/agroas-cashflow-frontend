@@ -1,9 +1,11 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 :root {
   color-scheme: light dark;
-  /* Paleta wykresow (skill dataviz) - diverging blue/red dla naleznosci/zobowiazania */
+  /* Paleta wykresow (skill dataviz) - diverging blue/red dla naleznosci/zobowiazania.
+     Celowo NIEZALEZNA od kolorystyki marki AGROAS - to neutralna konwencja
+     finansowa (jak czarne/czerwone liczby w ksiegowosci), nie element brandingu. */
   --chart-surface: #fcfcfb;
   --chart-nal: #2a78d6;
   --chart-zob: #e34948;
@@ -13,12 +15,17 @@
   --chart-ink-secondary: #52514e;
   --chart-ink-muted: #898781;
 
-  /* Akcent marki - ten sam niebieski co naleznosci na wykresach, uzyty w calym UI */
-  --accent: #2a78d6;
-  --accent-hover: #185fa5;
-  --accent-tint: #e6f1fb;
-  --accent-ink: #185fa5;
-  --accent-ring: rgba(42, 120, 214, 0.35);
+  /* Akcent marki AGROAS (System Identyfikacji Wizualnej 07/2023) - paleta
+     B3/A2/B1/A1/B2, uzyta wedlug zatwierdzonych par z sekcji "Zestawienie barw" */
+  --accent: #206f3a;
+  /* B3 - lesna zielen */
+  --accent-hover: #1d3c34;
+  /* A2 - ciemna zielen (najciemniejsza w palecie) */
+  --accent-tint: #ebf5f0;
+  /* B1 - jasne tlo */
+  --accent-ink: #1d3c34;
+  /* A2 - tekst na jasnym tle akcentu */
+  --accent-ring: rgba(32, 111, 58, 0.35);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,11 +39,13 @@
     --chart-ink-secondary: #c3c2b7;
     --chart-ink-muted: #898781;
 
-    --accent: #3987e5;
-    --accent-hover: #5598e7;
-    --accent-tint: rgba(57, 135, 229, 0.16);
-    --accent-ink: #86b6ef;
-    --accent-ring: rgba(57, 135, 229, 0.45);
+    --accent: #41c86e;
+    /* B2 - zywa zielen, czytelna na ciemnym tle */
+    --accent-hover: #6dd48d;
+    --accent-tint: rgba(65, 200, 110, 0.16);
+    --accent-ink: #a2e4b8;
+    /* A1 - jasna mieta jako tekst na przyciemnionym tle akcentu */
+    --accent-ring: rgba(65, 200, 110, 0.45);
   }
 }
 
@@ -50,16 +59,16 @@
   --chart-ink-secondary: #c3c2b7;
   --chart-ink-muted: #898781;
 
-  --accent: #3987e5;
-  --accent-hover: #5598e7;
-  --accent-tint: rgba(57, 135, 229, 0.16);
-  --accent-ink: #86b6ef;
-  --accent-ring: rgba(57, 135, 229, 0.45);
+  --accent: #41c86e;
+  --accent-hover: #6dd48d;
+  --accent-tint: rgba(65, 200, 110, 0.16);
+  --accent-ink: #a2e4b8;
+  --accent-ring: rgba(65, 200, 110, 0.45);
 }
 
 body {
   margin: 0;
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-feature-settings: "tnum" 1, "cv11" 1;
 }
 
