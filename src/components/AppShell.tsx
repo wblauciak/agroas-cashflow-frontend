@@ -64,17 +64,6 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
-        <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
-          <UzytkownikBadge />
-          <button
-            onClick={przelacz}
-            aria-label={motyw === 'dark' ? 'Przełącz na motyw jasny' : 'Przełącz na motyw ciemny'}
-            title={motyw === 'dark' ? 'Motyw jasny' : 'Motyw ciemny'}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          >
-            {motyw === 'dark' ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
-          </button>
-        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -83,7 +72,19 @@ export function AppShell() {
             <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">{biezaca.etykieta}</h2>
             <p className="text-sm text-slate-400 dark:text-slate-500">{biezaca.opis}</p>
           </div>
-          {meta.data && <FreshnessBadge wygenerowano={meta.data.wygenerowano} />}
+          <div className="flex items-center gap-4">
+            {meta.data && <FreshnessBadge wygenerowano={meta.data.wygenerowano} />}
+            <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
+            <UzytkownikBadge />
+            <button
+              onClick={przelacz}
+              aria-label={motyw === 'dark' ? 'Przełącz na motyw jasny' : 'Przełącz na motyw ciemny'}
+              title={motyw === 'dark' ? 'Motyw jasny' : 'Motyw ciemny'}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            >
+              {motyw === 'dark' ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
+            </button>
+          </div>
         </header>
         <main className="mx-auto w-full max-w-[1600px] flex-1 px-8 py-10">
           <Outlet />
