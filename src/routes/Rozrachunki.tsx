@@ -22,6 +22,7 @@ export function Rozrachunki() {
   const [szukaj, setSzukaj] = useState('');
   const [kierunek, setKierunek] = useState<'wszystkie' | 'NALEZNOSC' | 'ZOBOWIAZANIE'>('wszystkie');
   const [pokazPodatkiKasa, setPokazPodatkiKasa] = useState(false);
+  const [ukryjKancelarie, setUkryjKancelarie] = useState(false);
   const [branzaFiltr, setBranzaFiltr] = useState<string>('wszystkie');
 
   const wszystkiePlatnosci = useMemo(() => {
@@ -36,6 +37,7 @@ export function Rozrachunki() {
     return wszystkiePlatnosci.filter((p) => {
       if (kierunek !== 'wszystkie' && p.kierunek !== kierunek) return false;
       if (!pokazPodatkiKasa && (p.kategoria === 'PODATKI' || p.kategoria === 'KASA_BANK')) return false;
+      if (ukryjKancelarie && p.kontrahentKancelaria) return false;
       if (branzaFiltr !== 'wszystkie') {
         const idx = Number(branzaFiltr);
         const naleźy = typeof p.branza === 'number' ? p.branza === idx : p.branza.some(([b]) => b === idx);
@@ -48,11 +50,28 @@ export function Rozrachunki() {
       }
       return true;
     });
-  }, [wszystkiePlatnosci, kierunek, pokazPodatkiKasa, branzaFiltr, szukaj, otwarte.data]);
+  }, [wszystkiePlatnosci, kierunek, pokazPodatkiKasa, ukryjKancelarie, branzaFiltr, szukaj, otwarte.data]);
 
   const kolumny: Kolumna<Platnosc>[] = useMemo(
     () => [
-      { id: 'kontrahent', naglowek: 'Kontrahent', wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz) },
+      {
+        id: 'kontrahent',
+        naglowek: 'Kontrahent',
+        wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz),
+        cell: (r) => (
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate">{nazwaKontrahenta(otwarte.data, r.kntKlucz)}</span>
+            {r.kontrahentKancelaria && (
+              <span
+                className="shrink-0 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                title="Kontrahent w windykacji sądowej/komorniczej przez kancelarię prawną"
+              >
+                Kancelaria
+              </span>
+            )}
+          </span>
+        ),
+      },
       { id: 'dok', naglowek: 'Dokument', wartosc: (r) => r.dok, szerokosc: 160 },
       {
         id: 'kierunek',
@@ -149,6 +168,10 @@ export function Rozrachunki() {
         <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
           <input type="checkbox" checked={pokazPodatkiKasa} onChange={(e) => setPokazPodatkiKasa(e.target.checked)} />
           pokaż PODATKI i KASA/BANK
+        </label>
+        <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300" title="Kontrahenci z otwartą sprawą sądową/komorniczą przez kancelarię prawną — nie są aktywnym zadłużeniem operacyjnym">
+          <input type="checkbox" checked={ukryjKancelarie} onChange={(e) => setUkryjKancelarie(e.target.checked)} />
+          ukryj klientów w windykacji (kancelaria)
         </label>
       </div>
 

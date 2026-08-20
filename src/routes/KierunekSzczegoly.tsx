@@ -16,6 +16,7 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
   const otwarte = useOtwarte(meta.data?.pliki.otwarte);
 
   const [pokazWszystkie, setPokazWszystkie] = useState(false);
+  const [ukryjKancelarie, setUkryjKancelarie] = useState(false);
   const [szukaj, setSzukaj] = useState('');
   const [branzaWybrana, setBranzaWybrana] = useState<number | null>(null);
   const [pasmoWybrane, setPasmoWybrane] = useState<number | null>(null);
@@ -25,8 +26,9 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
     return otwarte.data.dane
       .map((r) => dekodujPlatnosc(r, otwarte.data!.slowniki))
       .filter((p) => p.kierunek === kierunek)
-      .filter((p) => pokazWszystkie || p.kategoria === 'HANDLOWY');
-  }, [otwarte.data, kierunek, pokazWszystkie]);
+      .filter((p) => pokazWszystkie || p.kategoria === 'HANDLOWY')
+      .filter((p) => !ukryjKancelarie || !p.kontrahentKancelaria);
+  }, [otwarte.data, kierunek, pokazWszystkie, ukryjKancelarie]);
 
   const branze = otwarte.data?.slowniki.brn ?? [];
 
@@ -76,7 +78,24 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
 
   const kolumny: Kolumna<Platnosc>[] = useMemo(
     () => [
-      { id: 'kontrahent', naglowek: 'Kontrahent', wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz) },
+      {
+        id: 'kontrahent',
+        naglowek: 'Kontrahent',
+        wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz),
+        cell: (r) => (
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate">{nazwaKontrahenta(otwarte.data, r.kntKlucz)}</span>
+            {r.kontrahentKancelaria && (
+              <span
+                className="shrink-0 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                title="Kontrahent w windykacji sądowej/komorniczej przez kancelarię prawną"
+              >
+                Kancelaria
+              </span>
+            )}
+          </span>
+        ),
+      },
       { id: 'dok', naglowek: 'Dokument', wartosc: (r) => r.dok, szerokosc: 160 },
       {
         id: 'branza',
@@ -127,6 +146,10 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
           <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
             <input type="checkbox" checked={pokazWszystkie} onChange={(e) => setPokazWszystkie(e.target.checked)} />
             pokaż też PODATKI, KASA/BANK i PROLONGATA
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300" title="Kontrahenci z otwartą sprawą sądową/komorniczą przez kancelarię prawną — nie są aktywnym zadłużeniem operacyjnym">
+            <input type="checkbox" checked={ukryjKancelarie} onChange={(e) => setUkryjKancelarie(e.target.checked)} />
+            ukryj klientów w windykacji (kancelaria)
           </label>
           <button
             onClick={eksportujCsv}
