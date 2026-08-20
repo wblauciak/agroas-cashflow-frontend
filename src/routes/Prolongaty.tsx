@@ -63,14 +63,24 @@ export function Prolongaty() {
   const [dataDo, setDataDo] = useState('');
   const [szukaj, setSzukaj] = useState('');
   const [kntWybrany, setKntWybrany] = useState<number | null>(null);
+  const [pokazRozliczone, setPokazRozliczone] = useState(false);
 
   const dane = useMemo(() => {
     if (!prolongaty.data) return [];
     return prolongaty.data.dane.map((r) => dekodujProlongate(r, prolongaty.data.slowniki.status));
   }, [prolongaty.data]);
 
-  // Kafelki poziomow - zawsze z pelnego zbioru, niezalezne od filtrow ponizej
-  // (stabilny przeglad "z lotu ptaka", tak jak kafelki KPI na Przegladzie).
+  // Dokumenty z Pozostaje=0 sa juz splacone/rozliczone - domyslnie nieistotne
+  // dla widoku "co jeszcze trzeba splacic", wiec domyslnie ukryte wszedzie
+  // ponizej (kafelki, kontrahenci, tabela dokumentow).
+  const daneAktywne = useMemo(
+    () => (pokazRozliczone ? dane : dane.filter((p) => p.pozostajeDzis !== 0)),
+    [dane, pokazRozliczone],
+  );
+
+  // Kafelki poziomow - zawsze z pelnego (aktywnego) zbioru, niezalezne od
+  // filtrow ponizej (stabilny przeglad "z lotu ptaka", tak jak kafelki KPI
+  // na Przegladzie).
   const kpiPoziomy = useMemo(() => {
     const puste = () => ({ prolongowana: 0, przeterminowane: 0, liczba: 0 });
     const b: Record<Poziom, { prolongowana: number; przeterminowane: number; liczba: number }> = {
@@ -78,14 +88,14 @@ export function Prolongaty() {
       '2': puste(),
       '3+': puste(),
     };
-    for (const p of dane) {
+    for (const p of daneAktywne) {
       const k = poziomBucket(p.nrProlongaty);
       b[k].prolongowana += p.kwotaProlongowana;
       b[k].liczba += 1;
       if (p.status === 'OTWARTA PRZETERMINOWANA') b[k].przeterminowane += p.pozostajeDzis;
     }
     return b;
-  }, [dane]);
+  }, [daneAktywne]);
 
   const dataOdDni = dataOd ? dataNaDni(dataOd) : null;
   const dataDoDni = dataDo ? dataNaDni(dataDo) : null;
@@ -94,7 +104,7 @@ export function Prolongaty() {
   // ORAZ dla tabeli dokumentow (wybor kontrahenta filtruje dalej, osobno).
   const wgPoziomuIDaty = useMemo(() => {
     const szukajLower = szukaj.trim().toLowerCase();
-    return dane.filter((p) => {
+    return daneAktywne.filter((p) => {
       if (poziomFiltr !== 'wszystkie' && poziomBucket(p.nrProlongaty) !== poziomFiltr) return false;
       if (dataOdDni !== null && (p.terminPoProlongacie === null || p.terminPoProlongacie < dataOdDni)) return false;
       if (dataDoDni !== null && (p.terminPoProlongacie === null || p.terminPoProlongacie > dataDoDni)) return false;
@@ -104,7 +114,7 @@ export function Prolongaty() {
       }
       return true;
     });
-  }, [dane, poziomFiltr, dataOdDni, dataDoDni, szukaj, otwarte.data]);
+  }, [daneAktywne, poziomFiltr, dataOdDni, dataDoDni, szukaj, otwarte.data]);
 
   const kontrahenci = useMemo(() => {
     const mapa = new Map<number, KontrahentRollup>();
@@ -263,6 +273,10 @@ export function Prolongaty() {
               className="rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900"
             />
           </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <input type="checkbox" checked={pokazRozliczone} onChange={(e) => setPokazRozliczone(e.target.checked)} />
+            pokaż rozliczone (pozostaje 0 zł)
+          </label>
           {(poziomFiltr !== 'wszystkie' || filtrDatyAktywny || szukaj) && (
             <button
               onClick={() => {
@@ -276,7 +290,7 @@ export function Prolongaty() {
               Wyczyść filtry
             </button>
           )}
-          <p className="ml-auto text-sm text-slate-500 dark:text-slate-400">{dokumenty.length} z {dane.length} pozycji</p>
+          <p className="ml-auto text-sm text-slate-500 dark:text-slate-400">{dokumenty.length} z {daneAktywne.length} pozycji</p>
         </div>
         <SortableTable
           dane={dokumenty}
