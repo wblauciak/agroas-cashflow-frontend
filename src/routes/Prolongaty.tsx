@@ -64,6 +64,7 @@ export function Prolongaty() {
   const [szukaj, setSzukaj] = useState('');
   const [kntWybrany, setKntWybrany] = useState<number | null>(null);
   const [pokazRozliczone, setPokazRozliczone] = useState(false);
+  const [tylkoPrzeterminowane, setTylkoPrzeterminowane] = useState(false);
 
   const dane = useMemo(() => {
     if (!prolongaty.data) return [];
@@ -100,15 +101,31 @@ export function Prolongaty() {
     return b;
   }, [daneAktywne]);
 
+  const kpiRazem = useMemo(
+    () =>
+      (['1', '2', '3+'] as const).reduce(
+        (s, p) => ({
+          prolongowana: s.prolongowana + kpiPoziomy[p].prolongowana,
+          przeterminowane: s.przeterminowane + kpiPoziomy[p].przeterminowane,
+          liczba: s.liczba + kpiPoziomy[p].liczba,
+          liczbaPrzeterminowanych: s.liczbaPrzeterminowanych + kpiPoziomy[p].liczbaPrzeterminowanych,
+        }),
+        { prolongowana: 0, przeterminowane: 0, liczba: 0, liczbaPrzeterminowanych: 0 },
+      ),
+    [kpiPoziomy],
+  );
+
   const dataOdDni = dataOd ? dataNaDni(dataOd) : null;
   const dataDoDni = dataDo ? dataNaDni(dataDo) : null;
 
-  // Poziom + data zapadalnosci + szukaj - baza dla zestawienia kontrahentow
-  // ORAZ dla tabeli dokumentow (wybor kontrahenta filtruje dalej, osobno).
+  // Poziom + data zapadalnosci + tylko przeterminowane + szukaj - baza dla
+  // zestawienia kontrahentow ORAZ dla tabeli dokumentow (wybor kontrahenta
+  // filtruje dalej, osobno).
   const wgPoziomuIDaty = useMemo(() => {
     const szukajLower = szukaj.trim().toLowerCase();
     return daneAktywne.filter((p) => {
       if (poziomFiltr !== 'wszystkie' && poziomBucket(p.nrProlongaty) !== poziomFiltr) return false;
+      if (tylkoPrzeterminowane && p.status !== 'OTWARTA PRZETERMINOWANA') return false;
       if (dataOdDni !== null && (p.terminPoProlongacie === null || p.terminPoProlongacie < dataOdDni)) return false;
       if (dataDoDni !== null && (p.terminPoProlongacie === null || p.terminPoProlongacie > dataDoDni)) return false;
       if (szukajLower) {
@@ -117,7 +134,7 @@ export function Prolongaty() {
       }
       return true;
     });
-  }, [daneAktywne, poziomFiltr, dataOdDni, dataDoDni, szukaj, otwarte.data]);
+  }, [daneAktywne, poziomFiltr, tylkoPrzeterminowane, dataOdDni, dataDoDni, szukaj, otwarte.data]);
 
   const kontrahenci = useMemo(() => {
     const mapa = new Map<number, KontrahentRollup>();
@@ -228,7 +245,28 @@ export function Prolongaty() {
   return (
     <div className="space-y-6">
       <p className="text-xs text-slate-400 dark:text-slate-500">Kliknij kafelek, żeby przefiltrować tabele poniżej po poziomie.</p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setPoziomFiltr('wszystkie')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setPoziomFiltr('wszystkie');
+            }
+          }}
+          className={`cursor-pointer rounded-2xl text-left transition-shadow ${poziomFiltr === 'wszystkie' ? 'ring-2 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-950' : ''}`}
+          style={poziomFiltr === 'wszystkie' ? ({ '--tw-ring-color': 'var(--accent)' } as CSSProperties) : undefined}
+        >
+          <KpiCard
+            etykieta="Razem — prolongowane"
+            wartosc={formatujPLN(kpiRazem.prolongowana)}
+            podpis={`${kpiRazem.liczba} pozycji`}
+            ikona={Layers}
+            ton="neutralny"
+          />
+        </div>
         {(['1', '2', '3+'] as const).map((poziom) => (
           <div
             key={poziom}
@@ -253,6 +291,28 @@ export function Prolongaty() {
             />
           </div>
         ))}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setPoziomFiltr('wszystkie')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setPoziomFiltr('wszystkie');
+            }
+          }}
+          className={`cursor-pointer rounded-2xl text-left transition-shadow ${poziomFiltr === 'wszystkie' ? 'ring-2 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-950' : ''}`}
+          style={poziomFiltr === 'wszystkie' ? ({ '--tw-ring-color': 'var(--accent)' } as CSSProperties) : undefined}
+        >
+          <KpiCard
+            etykieta="Razem — przeterminowane"
+            wartosc={formatujPLN(kpiRazem.przeterminowane)}
+            podpis={`${kpiRazem.liczbaPrzeterminowanych} pozycji`}
+            ikona={TriangleAlert}
+            ton={kpiRazem.przeterminowane > 0 ? 'ostrzezenie' : 'neutralny'}
+            dymek="Pozostaje dziś na dokumentach prolongaty, których termin już minął, ze wszystkich poziomów łącznie."
+          />
+        </div>
         {(['1', '2', '3+'] as const).map((poziom) => (
           <div
             key={`prz-${poziom}`}
@@ -358,6 +418,10 @@ export function Prolongaty() {
           <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
             <input type="checkbox" checked={pokazRozliczone} onChange={(e) => setPokazRozliczone(e.target.checked)} />
             pokaż rozliczone (pozostaje 0 zł)
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <input type="checkbox" checked={tylkoPrzeterminowane} onChange={(e) => setTylkoPrzeterminowane(e.target.checked)} />
+            tylko przeterminowane
           </label>
           {(poziomFiltr !== 'wszystkie' || filtrDatyAktywny || szukaj) && (
             <button
