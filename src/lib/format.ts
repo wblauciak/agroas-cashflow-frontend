@@ -26,6 +26,11 @@ export function dniNaDate(dni: number): Date {
   return new Date(dni * MS_DZIEN);
 }
 
+/** "RRRR-MM-DD" (input type=date) -> dni od 1970-01-01. */
+export function dataNaDni(dataIso: string): number {
+  return Math.round(new Date(dataIso + 'T00:00:00Z').getTime() / MS_DZIEN);
+}
+
 const formatterData = new Intl.DateTimeFormat('pl-PL', {
   day: '2-digit',
   month: '2-digit',

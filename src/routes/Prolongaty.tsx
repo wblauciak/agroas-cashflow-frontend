@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { CalendarClock, Layers, TriangleAlert } from 'lucide-react';
 import { useMeta, useOtwarte, useProlongaty } from '../lib/api';
 import { dekodujProlongate } from '../lib/decode';
 import type { Prolongata } from '../lib/types';
-import { formatujDni, formatujPLN } from '../lib/format';
+import { dataNaDni, formatujDni, formatujPLN } from '../lib/format';
 import { nazwaKontrahenta } from '../lib/kontrahent';
+import { KpiCard } from '../components/KpiCard';
 import { SortableTable, type Kolumna } from '../components/SortableTable';
 import { StanZapytania } from '../components/StanZapytania';
 
@@ -18,10 +20,37 @@ const STATUS_TON: Record<string, string> = {
 
 function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_TON[status] ?? 'bg-slate-100 text-slate-700'}`}>
+    <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_TON[status] ?? 'bg-slate-100 text-slate-700'}`}>
       {status}
     </span>
   );
+}
+
+type Poziom = '1' | '2' | '3+';
+
+function poziomBucket(nr: number): Poziom {
+  if (nr <= 1) return '1';
+  if (nr === 2) return '2';
+  return '3+';
+}
+
+const POZIOM_TON: Record<Poziom, string> = {
+  '1': 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+  '2': 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+  '3+': 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300',
+};
+
+function PoziomBadge({ nr }: { nr: number }) {
+  const b = poziomBucket(nr);
+  return <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${POZIOM_TON[b]}`}>poziom {nr}</span>;
+}
+
+interface KontrahentRollup {
+  kntKlucz: number;
+  liczba: number;
+  maksPoziom: number;
+  sumaProlongowana: number;
+  sumaPozostaje: number;
 }
 
 export function Prolongaty() {
@@ -29,23 +58,93 @@ export function Prolongaty() {
   const otwarte = useOtwarte(meta.data?.pliki.otwarte);
   const prolongaty = useProlongaty(meta.data?.pliki.prolongaty);
 
+  const [poziomFiltr, setPoziomFiltr] = useState<'wszystkie' | Poziom>('wszystkie');
+  const [dataOd, setDataOd] = useState('');
+  const [dataDo, setDataDo] = useState('');
+  const [szukaj, setSzukaj] = useState('');
+  const [kntWybrany, setKntWybrany] = useState<number | null>(null);
+
   const dane = useMemo(() => {
     if (!prolongaty.data) return [];
     return prolongaty.data.dane.map((r) => dekodujProlongate(r, prolongaty.data.slowniki.status));
   }, [prolongaty.data]);
 
-  const { alerty, tabela } = useMemo(() => {
-    const alerty: Prolongata[] = [];
-    const tabela: Prolongata[] = [];
-    for (const p of dane) (p.nrProlongaty >= 3 ? alerty : tabela).push(p);
-    return { alerty, tabela };
+  // Kafelki poziomow - zawsze z pelnego zbioru, niezalezne od filtrow ponizej
+  // (stabilny przeglad "z lotu ptaka", tak jak kafelki KPI na Przegladzie).
+  const kpiPoziomy = useMemo(() => {
+    const puste = () => ({ prolongowana: 0, przeterminowane: 0, liczba: 0 });
+    const b: Record<Poziom, { prolongowana: number; przeterminowane: number; liczba: number }> = {
+      '1': puste(),
+      '2': puste(),
+      '3+': puste(),
+    };
+    for (const p of dane) {
+      const k = poziomBucket(p.nrProlongaty);
+      b[k].prolongowana += p.kwotaProlongowana;
+      b[k].liczba += 1;
+      if (p.status === 'OTWARTA PRZETERMINOWANA') b[k].przeterminowane += p.pozostajeDzis;
+    }
+    return b;
   }, [dane]);
 
-  const kolumny: Kolumna<Prolongata>[] = useMemo(
+  const dataOdDni = dataOd ? dataNaDni(dataOd) : null;
+  const dataDoDni = dataDo ? dataNaDni(dataDo) : null;
+
+  // Poziom + data zapadalnosci + szukaj - baza dla zestawienia kontrahentow
+  // ORAZ dla tabeli dokumentow (wybor kontrahenta filtruje dalej, osobno).
+  const wgPoziomuIDaty = useMemo(() => {
+    const szukajLower = szukaj.trim().toLowerCase();
+    return dane.filter((p) => {
+      if (poziomFiltr !== 'wszystkie' && poziomBucket(p.nrProlongaty) !== poziomFiltr) return false;
+      if (dataOdDni !== null && (p.terminPoProlongacie === null || p.terminPoProlongacie < dataOdDni)) return false;
+      if (dataDoDni !== null && (p.terminPoProlongacie === null || p.terminPoProlongacie > dataDoDni)) return false;
+      if (szukajLower) {
+        const nazwa = nazwaKontrahenta(otwarte.data, p.kntKlucz).toLowerCase();
+        if (!p.dok.toLowerCase().includes(szukajLower) && !nazwa.includes(szukajLower)) return false;
+      }
+      return true;
+    });
+  }, [dane, poziomFiltr, dataOdDni, dataDoDni, szukaj, otwarte.data]);
+
+  const kontrahenci = useMemo(() => {
+    const mapa = new Map<number, KontrahentRollup>();
+    for (const p of wgPoziomuIDaty) {
+      const w = mapa.get(p.kntKlucz) ?? { kntKlucz: p.kntKlucz, liczba: 0, maksPoziom: 0, sumaProlongowana: 0, sumaPozostaje: 0 };
+      w.liczba += 1;
+      w.maksPoziom = Math.max(w.maksPoziom, p.nrProlongaty);
+      w.sumaProlongowana += p.kwotaProlongowana;
+      w.sumaPozostaje += p.pozostajeDzis;
+      mapa.set(p.kntKlucz, w);
+    }
+    return [...mapa.values()].sort((a, b) => b.sumaPozostaje - a.sumaPozostaje);
+  }, [wgPoziomuIDaty]);
+
+  const dokumenty = useMemo(
+    () => (kntWybrany === null ? wgPoziomuIDaty : wgPoziomuIDaty.filter((p) => p.kntKlucz === kntWybrany)),
+    [wgPoziomuIDaty, kntWybrany],
+  );
+
+  const kolumnyKontrahentow: Kolumna<KontrahentRollup>[] = useMemo(
+    () => [
+      { id: 'kontrahent', naglowek: 'Kontrahent', wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz) },
+      { id: 'liczba', naglowek: 'Prolongat', wartosc: (r) => r.liczba },
+      { id: 'maksPoziom', naglowek: 'Maks. poziom', wartosc: (r) => r.maksPoziom, cell: (r) => <PoziomBadge nr={r.maksPoziom} /> },
+      { id: 'sumaProlongowana', naglowek: 'Wartość prolongowana', wartosc: (r) => r.sumaProlongowana, cell: (r) => formatujPLN(r.sumaProlongowana) },
+      {
+        id: 'sumaPozostaje',
+        naglowek: 'Pozostaje dziś',
+        wartosc: (r) => r.sumaPozostaje,
+        cell: (r) => <span className="font-semibold tabular-nums">{formatujPLN(r.sumaPozostaje)}</span>,
+      },
+    ],
+    [otwarte.data],
+  );
+
+  const kolumnyDokumentow: Kolumna<Prolongata>[] = useMemo(
     () => [
       { id: 'kontrahent', naglowek: 'Kontrahent', wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz) },
       { id: 'dok', naglowek: 'Dokument', wartosc: (r) => r.dok },
-      { id: 'nrProlongaty', naglowek: 'Poziom', wartosc: (r) => r.nrProlongaty },
+      { id: 'nrProlongaty', naglowek: 'Poziom', wartosc: (r) => r.nrProlongaty, cell: (r) => <PoziomBadge nr={r.nrProlongaty} /> },
       { id: 'rata', naglowek: 'Rata', wartosc: (r) => r.rata },
       { id: 'kwotaProlongowana', naglowek: 'Kwota', wartosc: (r) => r.kwotaProlongowana, cell: (r) => formatujPLN(r.kwotaProlongowana) },
       { id: 'pozostajeDzis', naglowek: 'Pozostaje', wartosc: (r) => r.pozostajeDzis, cell: (r) => formatujPLN(r.pozostajeDzis) },
@@ -63,47 +162,129 @@ export function Prolongaty() {
   if (meta.isLoading || prolongaty.isLoading || otwarte.isLoading) return <StanZapytania stan="ladowanie" />;
   if (meta.isError || prolongaty.isError) return <StanZapytania stan="blad" />;
 
-  // KwotaProlongowana, nie pozostajeDzis - zgodnie z definicja "prolongatyPoziom3Plus"
-  // w CashFlowJsonBuilder.cs, zeby suma tu i na Przegladzie (z meta.json) sie zgadzaly.
-  const sumaAlertow = alerty.reduce((s, p) => s + p.kwotaProlongowana, 0);
+  const nazwaWybranego = kntWybrany !== null ? nazwaKontrahenta(otwarte.data, kntWybrany) : null;
+  const filtrDatyAktywny = dataOd !== '' || dataDo !== '';
 
   return (
     <div className="space-y-6">
-      {alerty.length > 0 && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-          <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-            Poziom 3+ — kandydaci do windykacji, nie do kolejnej prolongaty
-          </div>
-          <div className="mt-1 text-sm text-amber-800 dark:text-amber-300">
-            {alerty.length} płatności na {formatujPLN(sumaAlertow)}. Od trzeciego poziomu skuteczność prolongat
-            statystycznie się załamuje.
-          </div>
-          <div className="mt-3 divide-y divide-amber-200 dark:divide-amber-900">
-            {alerty
-              .slice()
-              .sort((a, b) => b.kwotaProlongowana - a.kwotaProlongowana)
-              .map((p) => (
-                <div key={`${p.prlnId}-${p.rata}`} className="flex items-center justify-between py-1.5 text-sm">
-                  <span className="text-amber-900 dark:text-amber-200">
-                    {nazwaKontrahenta(otwarte.data, p.kntKlucz)} — {p.dok} (poziom {p.nrProlongaty})
-                  </span>
-                  <span className="font-medium text-amber-900 dark:text-amber-200">{formatujPLN(p.kwotaProlongowana)}</span>
-                </div>
-              ))}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {(['1', '2', '3+'] as const).map((poziom) => (
+          <KpiCard
+            key={poziom}
+            etykieta={`Poziom ${poziom} — prolongowane`}
+            wartosc={formatujPLN(kpiPoziomy[poziom].prolongowana)}
+            podpis={`${kpiPoziomy[poziom].liczba} pozycji`}
+            ikona={Layers}
+            ton={poziom === '3+' ? 'ostrzezenie' : 'neutralny'}
+          />
+        ))}
+        {(['1', '2', '3+'] as const).map((poziom) => (
+          <KpiCard
+            key={`prz-${poziom}`}
+            etykieta={`Poziom ${poziom} — przeterminowane`}
+            wartosc={formatujPLN(kpiPoziomy[poziom].przeterminowane)}
+            ikona={TriangleAlert}
+            ton={kpiPoziomy[poziom].przeterminowane > 0 ? 'ostrzezenie' : 'neutralny'}
+            dymek="Pozostaje dziś na dokumentach prolongaty, których termin już minął (status 'OTWARTA PRZETERMINOWANA')."
+          />
+        ))}
+      </div>
+
+      {kpiPoziomy['3+'].liczba > 0 && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
+          <TriangleAlert size={18} strokeWidth={2} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
+          <div className="text-sm text-amber-900 dark:text-amber-200">
+            <span className="font-semibold">Poziom 3+ — kandydaci do windykacji, nie do kolejnej prolongaty.</span> Od
+            trzeciego poziomu skuteczność prolongat statystycznie się załamuje. Filtruj tabelę poniżej po poziomie „3+", żeby
+            zobaczyć pełną listę.
           </div>
         </div>
       )}
 
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Prolongaty (poziom 1–2)</h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{tabela.length} pozycji</p>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Kontrahenci</h3>
+          {kntWybrany !== null && (
+            <button
+              onClick={() => setKntWybrany(null)}
+              className="text-xs font-medium text-slate-500 underline hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              Wyczyść wybór kontrahenta
+            </button>
+          )}
+        </div>
+        <SortableTable
+          dane={kontrahenci}
+          kolumny={kolumnyKontrahentow}
+          domyslneSortowanie={{ id: 'sumaPozostaje', desc: true }}
+          wierszKlucz={(r) => r.kntKlucz}
+          onKlikWiersza={(r) => setKntWybrany(kntWybrany === r.kntKlucz ? null : r.kntKlucz)}
+        />
       </div>
-      <SortableTable
-        dane={tabela}
-        kolumny={kolumny}
-        domyslneSortowanie={{ id: 'pozostajeDzis', desc: true }}
-        wierszKlucz={(r) => `${r.prlnId}-${r.rata}`}
-      />
+
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <h3 className="w-full text-sm font-semibold text-slate-900 dark:text-slate-100 sm:w-auto">
+            Dokumenty{nazwaWybranego && <span className="font-normal text-slate-500 dark:text-slate-400"> — {nazwaWybranego}</span>}
+          </h3>
+          <input
+            type="text"
+            placeholder="Szukaj: dokument, kontrahent…"
+            value={szukaj}
+            onChange={(e) => setSzukaj(e.target.value)}
+            className="w-56 rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+          />
+          <select
+            value={poziomFiltr}
+            onChange={(e) => setPoziomFiltr(e.target.value as typeof poziomFiltr)}
+            className="rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+          >
+            <option value="wszystkie">Wszystkie poziomy</option>
+            <option value="1">Poziom 1</option>
+            <option value="2">Poziom 2</option>
+            <option value="3+">Poziom 3+</option>
+          </select>
+          <label className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
+            <CalendarClock size={15} strokeWidth={2} className="text-slate-400" />
+            Zapadalność od
+            <input
+              type="date"
+              value={dataOd}
+              onChange={(e) => setDataOd(e.target.value)}
+              className="rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
+            do
+            <input
+              type="date"
+              value={dataDo}
+              onChange={(e) => setDataDo(e.target.value)}
+              className="rounded-md border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+            />
+          </label>
+          {(poziomFiltr !== 'wszystkie' || filtrDatyAktywny || szukaj) && (
+            <button
+              onClick={() => {
+                setPoziomFiltr('wszystkie');
+                setDataOd('');
+                setDataDo('');
+                setSzukaj('');
+              }}
+              className="text-xs font-medium text-slate-500 underline hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              Wyczyść filtry
+            </button>
+          )}
+          <p className="ml-auto text-sm text-slate-500 dark:text-slate-400">{dokumenty.length} z {dane.length} pozycji</p>
+        </div>
+        <SortableTable
+          dane={dokumenty}
+          kolumny={kolumnyDokumentow}
+          domyslneSortowanie={{ id: 'pozostajeDzis', desc: true }}
+          wierszKlucz={(r) => `${r.prlnId}-${r.rata}`}
+        />
+      </div>
     </div>
   );
 }
