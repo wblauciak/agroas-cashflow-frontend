@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { BarChart3, ArrowLeftRight, Clock, CreditCard, LayoutDashboard, LineChart, Table2, Wallet } from 'lucide-react';
+import { BarChart3, ArrowLeftRight, Clock, CreditCard, LayoutDashboard, LineChart, Moon, Sun, Table2, Wallet } from 'lucide-react';
 import { useMeta } from '../lib/api';
+import { useMotyw } from '../lib/theme';
 import { FreshnessBadge } from './FreshnessBadge';
 import { UzytkownikBadge } from './UzytkownikBadge';
 
@@ -18,11 +19,12 @@ const NAWIGACJA = [
 export function AppShell() {
   const meta = useMeta();
   const location = useLocation();
+  const { motyw, przelacz } = useMotyw();
   const biezaca = NAWIGACJA.find((n) => (n.do === '/' ? location.pathname === '/' : location.pathname.startsWith(n.do))) ?? NAWIGACJA[0];
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
-      <aside className="flex w-64 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3 px-5 py-6">
           <div
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white"
@@ -62,8 +64,16 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-slate-100 px-5 py-4 dark:border-slate-800">
+        <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
           <UzytkownikBadge />
+          <button
+            onClick={przelacz}
+            aria-label={motyw === 'dark' ? 'Przełącz na motyw jasny' : 'Przełącz na motyw ciemny'}
+            title={motyw === 'dark' ? 'Motyw jasny' : 'Motyw ciemny'}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          >
+            {motyw === 'dark' ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
+          </button>
         </div>
       </aside>
 

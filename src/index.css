@@ -1,6 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
+/* Motyw sterowany atrybutem data-theme (przelacznik w AppShell), nie samym
+   prefers-color-scheme - dzieki temu uzytkownik moze nadpisac ustawienie
+   systemowe. lib/theme.ts ustawia atrybut na kazdym mount (domyslnie wg
+   systemu), wiec zachowanie "podazaj za systemem" zostaje, dopoki ktos
+   nie przelaczy recznie. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   color-scheme: light dark;
   /* Paleta wykresow (skill dataviz) - diverging blue/red dla naleznosci/zobowiazania.
@@ -49,7 +56,12 @@
   }
 }
 
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --chart-surface: #1a1a19;
   --chart-nal: #3987e5;
   --chart-zob: #e66767;
