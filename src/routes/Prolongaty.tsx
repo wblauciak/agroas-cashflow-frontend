@@ -45,6 +45,16 @@ function PoziomBadge({ nr }: { nr: number }) {
   return <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${POZIOM_TON[b]}`}>poziom {nr}</span>;
 }
 
+/** Liczba dni, o ile przesunieto termin platnosci - null gdy brak terminu pierwotnego (ProlongElem bez dopasowania, ~15% przypadkow). */
+function dniProlongaty(r: Prolongata): number | null {
+  return r.terminPierwotny !== null && r.terminPoProlongacie !== null ? r.terminPoProlongacie - r.terminPierwotny : null;
+}
+
+/** Odsetki jako % wartosci raty - ile firma zarabia na wydluzeniu terminu, wzgledem kwoty ktora zostala prolongowana. */
+function procentOdsetek(r: Prolongata): number | null {
+  return r.kwotaProlongowana !== 0 ? (r.kwotaOdsetek / r.kwotaProlongowana) * 100 : null;
+}
+
 interface KontrahentRollup {
   kntKlucz: number;
   liczba: number;
@@ -222,19 +232,49 @@ export function Prolongaty() {
         cell: (r) => formatujDni(r.terminPoProlongacie),
         wyrownanie: 'prawo',
       },
+      {
+        id: 'dniProlongaty',
+        naglowek: 'Dni prolongaty',
+        wartosc: (r) => dniProlongaty(r) ?? -1,
+        cell: (r) => {
+          const dni = dniProlongaty(r);
+          return dni === null ? '—' : `${dni} dni`;
+        },
+        wyrownanie: 'prawo',
+      },
+      {
+        id: 'kwotaOdsetek',
+        naglowek: 'Odsetki',
+        wartosc: (r) => r.kwotaOdsetek,
+        cell: (r) => <span className="tabular-nums">{formatujPLN(r.kwotaOdsetek)}</span>,
+        wyrownanie: 'prawo',
+      },
+      {
+        id: 'procentOdsetek',
+        naglowek: '% odsetek',
+        wartosc: (r) => procentOdsetek(r) ?? -1,
+        cell: (r) => {
+          const p = procentOdsetek(r);
+          return p === null ? '—' : `${p.toFixed(1)}%`;
+        },
+        wyrownanie: 'prawo',
+      },
       { id: 'status', naglowek: 'Status', wartosc: (r) => r.status, cell: (r) => <StatusBadge status={r.status} /> },
     ],
     [otwarte.data],
   );
 
-  const podsumowanieDokumentow = useMemo(
-    () => ({
+  const podsumowanieDokumentow = useMemo(() => {
+    const sumaProlongowana = dokumenty.reduce((s, r) => s + r.kwotaProlongowana, 0);
+    const sumaOdsetek = dokumenty.reduce((s, r) => s + r.kwotaOdsetek, 0);
+    return {
       kontrahent: `Suma (${dokumenty.length} poz.)`,
-      kwotaProlongowana: formatujPLN(dokumenty.reduce((s, r) => s + r.kwotaProlongowana, 0)),
+      kwotaProlongowana: formatujPLN(sumaProlongowana),
       pozostajeDzis: formatujPLN(dokumenty.reduce((s, r) => s + r.pozostajeDzis, 0)),
-    }),
-    [dokumenty],
-  );
+      kwotaOdsetek: formatujPLN(sumaOdsetek),
+      procentOdsetek: sumaProlongowana !== 0 ? `${((sumaOdsetek / sumaProlongowana) * 100).toFixed(1)}%` : '—',
+    };
+  }, [dokumenty]);
 
   if (meta.isLoading || prolongaty.isLoading || otwarte.isLoading) return <StanZapytania stan="ladowanie" />;
   if (meta.isError || prolongaty.isError) return <StanZapytania stan="blad" />;
