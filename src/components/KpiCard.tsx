@@ -4,19 +4,44 @@ import { InfoTooltip } from './InfoTooltip';
 
 const TON_STYL = {
   neutralny: {
+    karta: 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900',
     tekst: 'text-slate-900 dark:text-slate-100',
     plakietka: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
     pigulka: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
   },
   dobry: {
+    karta: 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900',
     tekst: 'text-emerald-600 dark:text-emerald-400',
     plakietka: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400',
     pigulka: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
   },
   zly: {
+    karta: 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900',
     tekst: 'text-red-600 dark:text-red-400',
     plakietka: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
     pigulka: 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300',
+  },
+  /** Kolor tozsamosci Naleznosci - ten sam niebieski co chart-nal / plakietka Rozrachunkow. */
+  naleznosc: {
+    karta: 'border-blue-100 bg-blue-50/60 dark:border-blue-900/50 dark:bg-blue-950/20',
+    tekst: 'text-blue-600 dark:text-blue-400',
+    plakietka: 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300',
+    pigulka: 'bg-white text-blue-700 dark:bg-blue-950 dark:text-blue-300',
+  },
+  /** Kolor tozsamosci Zobowiazan - ten sam czerwony co chart-zob / plakietka Rozrachunkow. */
+  zobowiazanie: {
+    karta: 'border-red-100 bg-red-50/60 dark:border-red-900/50 dark:bg-red-950/20',
+    tekst: 'text-red-600 dark:text-red-400',
+    plakietka: 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300',
+    pigulka: 'bg-white text-red-700 dark:bg-red-950 dark:text-red-300',
+  },
+  /** Przeterminowane - swiadomie INNY odcien niz "zobowiazanie", zeby nie ginac
+      wsrod zwyklych czerwonych kart Zobowiazan (patrz feedback uzytkownika). */
+  ostrzezenie: {
+    karta: 'border-rose-200 bg-rose-50/70 dark:border-rose-900/60 dark:bg-rose-950/25',
+    tekst: 'text-rose-600 dark:text-rose-400',
+    plakietka: 'bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300',
+    pigulka: 'bg-white text-rose-700 dark:bg-rose-950 dark:text-rose-300',
   },
 } as const;
 
@@ -57,7 +82,7 @@ export function KpiCard({
   etykieta: string;
   wartosc: string;
   podpis?: string;
-  ton?: 'neutralny' | 'dobry' | 'zly';
+  ton?: 'neutralny' | 'dobry' | 'zly' | 'naleznosc' | 'zobowiazanie' | 'ostrzezenie';
   dymek?: ReactNode;
   ikona?: ComponentType<{ size?: number; strokeWidth?: number }>;
   delta?: Delta;
@@ -67,7 +92,7 @@ export function KpiCard({
   const styl = TON_STYL[ton];
 
   return (
-    <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
+    <div className={`min-w-0 rounded-2xl border p-6 shadow-md transition-shadow hover:shadow-lg ${styl.karta}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-1.5 text-sm font-medium leading-snug text-slate-500 dark:text-slate-400">
           <span>{etykieta}</span>

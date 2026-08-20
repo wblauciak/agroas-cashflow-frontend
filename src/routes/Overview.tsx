@@ -146,33 +146,44 @@ function SekcjaHoryzontow({
   wygenerowano: string;
   delta: Delta | undefined;
 }) {
+  const tonTozsamosci = kolor === 'blue' ? 'naleznosc' : 'zobowiazanie';
   return (
     <section>
       <NaglowekSekcji ikona={IkonaRazem} tytul={tytul} opis={opis} kolor={kolor} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <KpiCard etykieta="Razem otwarte" wartosc={formatujPLN(kpiStrona.razem)} podpis={`${kpiStrona.pozycji} pozycji`} ikona={IkonaRazem} />
+        <KpiCard
+          etykieta="Razem otwarte"
+          wartosc={formatujPLN(kpiStrona.razem)}
+          podpis={`${kpiStrona.pozycji} pozycji`}
+          ikona={IkonaRazem}
+          ton={tonTozsamosci}
+        />
         <KpiCard
           etykieta="Wymagane w 180 dniach"
           wartosc={horyzont ? formatujPLN(horyzont.w180) : '…'}
           ikona={CalendarCheck}
+          ton={tonTozsamosci}
           dymek="Wszystko, co ma termin płatności od dziś do 180 dni w przód (nie licząc już przeterminowanych). Zawiera w sobie kwoty z kart 90, 30 i 7 dni — to szersze okno, nie osobny wycinek."
         />
         <KpiCard
           etykieta="Wymagane w 90 dniach"
           wartosc={horyzont ? formatujPLN(horyzont.w90) : '…'}
           ikona={CalendarCheck}
+          ton={tonTozsamosci}
           dymek="Termin płatności od dziś do 90 dni w przód. Zawiera w sobie kwoty z kart 30 i 7 dni."
         />
         <KpiCard
           etykieta="Wymagane w 30 dniach"
           wartosc={horyzont ? formatujPLN(horyzont.w30) : '…'}
           ikona={CalendarCheck}
+          ton={tonTozsamosci}
           dymek="Termin płatności od dziś do 30 dni w przód. Zawiera kwotę z karty 7 dni. Bez pozycji już przeterminowanych (osobna karta)."
         />
         <KpiCard
           etykieta="Wymagane w 7 dniach"
           wartosc={horyzont ? formatujPLN(horyzont.w7) : '…'}
           ikona={CalendarCheck}
+          ton={tonTozsamosci}
           dymek="Suma z paska 7 dni poniżej, dzień po dniu."
         />
       </div>
@@ -191,7 +202,7 @@ function SekcjaHoryzontow({
           etykieta="Przeterminowane (ogółem)"
           wartosc={formatujPLN(kpiStrona.przeterminowane)}
           podpis={procent(kpiStrona.przeterminowane, kpiStrona.razem)}
-          ton="zly"
+          ton="ostrzezenie"
           ikona={TriangleAlert}
           delta={delta}
           kancelaria={horyzont && kancelariaOgolem(horyzont) > 0 ? formatujPLN(kancelariaOgolem(horyzont)) : undefined}
@@ -199,7 +210,7 @@ function SekcjaHoryzontow({
         <KpiCard
           etykieta="Przeterminowane do 7 dni"
           wartosc={horyzont ? formatujPLN(horyzont.przeterminowaneDo7) : '…'}
-          ton="zly"
+          ton="ostrzezenie"
           ikona={TriangleAlert}
           dymek="Przeterminowane od 1 do 7 dni. Rozłączny przedział — te cztery karty sumują się dokładnie do 'Przeterminowanych ogółem'."
           kancelaria={horyzont && horyzont.kancelariaDo7 > 0 ? formatujPLN(horyzont.kancelariaDo7) : undefined}
@@ -207,7 +218,7 @@ function SekcjaHoryzontow({
         <KpiCard
           etykieta="Przeterminowane do 14 dni"
           wartosc={horyzont ? formatujPLN(horyzont.przeterminowaneDo14) : '…'}
-          ton="zly"
+          ton="ostrzezenie"
           ikona={TriangleAlert}
           dymek="Przeterminowane od 8 do 14 dni (bez tych z karty 'do 7 dni')."
           kancelaria={horyzont && horyzont.kancelariaDo14 > 0 ? formatujPLN(horyzont.kancelariaDo14) : undefined}
@@ -215,7 +226,7 @@ function SekcjaHoryzontow({
         <KpiCard
           etykieta="Przeterminowane do 30 dni"
           wartosc={horyzont ? formatujPLN(horyzont.przeterminowaneDo30) : '…'}
-          ton="zly"
+          ton="ostrzezenie"
           ikona={TriangleAlert}
           dymek="Przeterminowane od 15 do 30 dni (bez tych z kart 'do 7' i 'do 14 dni')."
           kancelaria={horyzont && horyzont.kancelariaDo30 > 0 ? formatujPLN(horyzont.kancelariaDo30) : undefined}
@@ -223,7 +234,7 @@ function SekcjaHoryzontow({
         <KpiCard
           etykieta="Przeterminowane powyżej 30 dni"
           wartosc={horyzont ? formatujPLN(horyzont.przeterminowanePowyzej30) : '…'}
-          ton="zly"
+          ton="ostrzezenie"
           ikona={TriangleAlert}
           dymek="Ponad miesiąc po terminie — najpoważniejsza część zaległości, kandydat do windykacji."
           kancelaria={horyzont && horyzont.kancelariaPowyzej30 > 0 ? formatujPLN(horyzont.kancelariaPowyzej30) : undefined}
