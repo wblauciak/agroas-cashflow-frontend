@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { CalendarClock, Layers, TriangleAlert } from 'lucide-react';
 import { useMeta, useOtwarte, useProlongaty } from '../lib/api';
 import { dekodujProlongate } from '../lib/decode';
@@ -82,8 +82,8 @@ export function Prolongaty() {
   // filtrow ponizej (stabilny przeglad "z lotu ptaka", tak jak kafelki KPI
   // na Przegladzie).
   const kpiPoziomy = useMemo(() => {
-    const puste = () => ({ prolongowana: 0, przeterminowane: 0, liczba: 0 });
-    const b: Record<Poziom, { prolongowana: number; przeterminowane: number; liczba: number }> = {
+    const puste = () => ({ prolongowana: 0, przeterminowane: 0, liczba: 0, liczbaPrzeterminowanych: 0 });
+    const b: Record<Poziom, { prolongowana: number; przeterminowane: number; liczba: number; liczbaPrzeterminowanych: number }> = {
       '1': puste(),
       '2': puste(),
       '3+': puste(),
@@ -92,7 +92,10 @@ export function Prolongaty() {
       const k = poziomBucket(p.nrProlongaty);
       b[k].prolongowana += p.kwotaProlongowana;
       b[k].liczba += 1;
-      if (p.status === 'OTWARTA PRZETERMINOWANA') b[k].przeterminowane += p.pozostajeDzis;
+      if (p.status === 'OTWARTA PRZETERMINOWANA') {
+        b[k].przeterminowane += p.pozostajeDzis;
+        b[k].liczbaPrzeterminowanych += 1;
+      }
     }
     return b;
   }, [daneAktywne]);
@@ -137,36 +140,83 @@ export function Prolongaty() {
   const kolumnyKontrahentow: Kolumna<KontrahentRollup>[] = useMemo(
     () => [
       { id: 'kontrahent', naglowek: 'Kontrahent', wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz) },
-      { id: 'liczba', naglowek: 'Prolongat', wartosc: (r) => r.liczba },
+      { id: 'liczba', naglowek: 'Prolongat', wartosc: (r) => r.liczba, wyrownanie: 'prawo' },
       { id: 'maksPoziom', naglowek: 'Maks. poziom', wartosc: (r) => r.maksPoziom, cell: (r) => <PoziomBadge nr={r.maksPoziom} /> },
-      { id: 'sumaProlongowana', naglowek: 'Wartość prolongowana', wartosc: (r) => r.sumaProlongowana, cell: (r) => formatujPLN(r.sumaProlongowana) },
+      {
+        id: 'sumaProlongowana',
+        naglowek: 'Wartość prolongowana',
+        wartosc: (r) => r.sumaProlongowana,
+        cell: (r) => <span className="tabular-nums">{formatujPLN(r.sumaProlongowana)}</span>,
+        wyrownanie: 'prawo',
+      },
       {
         id: 'sumaPozostaje',
         naglowek: 'Pozostaje dziś',
         wartosc: (r) => r.sumaPozostaje,
         cell: (r) => <span className="font-semibold tabular-nums">{formatujPLN(r.sumaPozostaje)}</span>,
+        wyrownanie: 'prawo',
       },
     ],
     [otwarte.data],
+  );
+
+  const podsumowanieKontrahentow = useMemo(
+    () => ({
+      kontrahent: `Suma (${kontrahenci.length} kontrahentów)`,
+      liczba: kontrahenci.reduce((s, r) => s + r.liczba, 0),
+      sumaProlongowana: formatujPLN(kontrahenci.reduce((s, r) => s + r.sumaProlongowana, 0)),
+      sumaPozostaje: formatujPLN(kontrahenci.reduce((s, r) => s + r.sumaPozostaje, 0)),
+    }),
+    [kontrahenci],
   );
 
   const kolumnyDokumentow: Kolumna<Prolongata>[] = useMemo(
     () => [
       { id: 'kontrahent', naglowek: 'Kontrahent', wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz) },
       { id: 'dok', naglowek: 'Dokument', wartosc: (r) => r.dok },
+      { id: 'dokZrodlowy', naglowek: 'Dokument źródłowy', wartosc: (r) => r.dokZrodlowy ?? '—' },
       { id: 'nrProlongaty', naglowek: 'Poziom', wartosc: (r) => r.nrProlongaty, cell: (r) => <PoziomBadge nr={r.nrProlongaty} /> },
-      { id: 'rata', naglowek: 'Rata', wartosc: (r) => r.rata },
-      { id: 'kwotaProlongowana', naglowek: 'Kwota', wartosc: (r) => r.kwotaProlongowana, cell: (r) => formatujPLN(r.kwotaProlongowana) },
-      { id: 'pozostajeDzis', naglowek: 'Pozostaje', wartosc: (r) => r.pozostajeDzis, cell: (r) => formatujPLN(r.pozostajeDzis) },
+      { id: 'rata', naglowek: 'Rata', wartosc: (r) => r.rata, wyrownanie: 'prawo' },
+      {
+        id: 'terminPierwotny',
+        naglowek: 'Termin pierwotny',
+        wartosc: (r) => r.terminPierwotny,
+        cell: (r) => formatujDni(r.terminPierwotny),
+        wyrownanie: 'prawo',
+      },
+      {
+        id: 'kwotaProlongowana',
+        naglowek: 'Kwota',
+        wartosc: (r) => r.kwotaProlongowana,
+        cell: (r) => <span className="tabular-nums">{formatujPLN(r.kwotaProlongowana)}</span>,
+        wyrownanie: 'prawo',
+      },
+      {
+        id: 'pozostajeDzis',
+        naglowek: 'Pozostaje',
+        wartosc: (r) => r.pozostajeDzis,
+        cell: (r) => <span className="font-semibold tabular-nums">{formatujPLN(r.pozostajeDzis)}</span>,
+        wyrownanie: 'prawo',
+      },
       {
         id: 'terminPoProlongacie',
         naglowek: 'Termin po prolongacie',
         wartosc: (r) => r.terminPoProlongacie,
         cell: (r) => formatujDni(r.terminPoProlongacie),
+        wyrownanie: 'prawo',
       },
       { id: 'status', naglowek: 'Status', wartosc: (r) => r.status, cell: (r) => <StatusBadge status={r.status} /> },
     ],
     [otwarte.data],
+  );
+
+  const podsumowanieDokumentow = useMemo(
+    () => ({
+      kontrahent: `Suma (${dokumenty.length} poz.)`,
+      kwotaProlongowana: formatujPLN(dokumenty.reduce((s, r) => s + r.kwotaProlongowana, 0)),
+      pozostajeDzis: formatujPLN(dokumenty.reduce((s, r) => s + r.pozostajeDzis, 0)),
+    }),
+    [dokumenty],
   );
 
   if (meta.isLoading || prolongaty.isLoading || otwarte.isLoading) return <StanZapytania stan="ladowanie" />;
@@ -177,26 +227,56 @@ export function Prolongaty() {
 
   return (
     <div className="space-y-6">
+      <p className="text-xs text-slate-400 dark:text-slate-500">Kliknij kafelek, żeby przefiltrować tabele poniżej po poziomie.</p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(['1', '2', '3+'] as const).map((poziom) => (
-          <KpiCard
+          <div
             key={poziom}
-            etykieta={`Poziom ${poziom} — prolongowane`}
-            wartosc={formatujPLN(kpiPoziomy[poziom].prolongowana)}
-            podpis={`${kpiPoziomy[poziom].liczba} pozycji`}
-            ikona={Layers}
-            ton={poziom === '3+' ? 'ostrzezenie' : 'neutralny'}
-          />
+            role="button"
+            tabIndex={0}
+            onClick={() => setPoziomFiltr(poziomFiltr === poziom ? 'wszystkie' : poziom)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setPoziomFiltr(poziomFiltr === poziom ? 'wszystkie' : poziom);
+              }
+            }}
+            className={`cursor-pointer rounded-2xl text-left transition-shadow ${poziomFiltr === poziom ? 'ring-2 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-950' : ''}`}
+            style={poziomFiltr === poziom ? ({ '--tw-ring-color': 'var(--accent)' } as CSSProperties) : undefined}
+          >
+            <KpiCard
+              etykieta={`Poziom ${poziom} — prolongowane`}
+              wartosc={formatujPLN(kpiPoziomy[poziom].prolongowana)}
+              podpis={`${kpiPoziomy[poziom].liczba} pozycji`}
+              ikona={Layers}
+              ton={poziom === '3+' ? 'ostrzezenie' : 'neutralny'}
+            />
+          </div>
         ))}
         {(['1', '2', '3+'] as const).map((poziom) => (
-          <KpiCard
+          <div
             key={`prz-${poziom}`}
-            etykieta={`Poziom ${poziom} — przeterminowane`}
-            wartosc={formatujPLN(kpiPoziomy[poziom].przeterminowane)}
-            ikona={TriangleAlert}
-            ton={kpiPoziomy[poziom].przeterminowane > 0 ? 'ostrzezenie' : 'neutralny'}
-            dymek="Pozostaje dziś na dokumentach prolongaty, których termin już minął (status 'OTWARTA PRZETERMINOWANA')."
-          />
+            role="button"
+            tabIndex={0}
+            onClick={() => setPoziomFiltr(poziomFiltr === poziom ? 'wszystkie' : poziom)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setPoziomFiltr(poziomFiltr === poziom ? 'wszystkie' : poziom);
+              }
+            }}
+            className={`cursor-pointer rounded-2xl text-left transition-shadow ${poziomFiltr === poziom ? 'ring-2 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-950' : ''}`}
+            style={poziomFiltr === poziom ? ({ '--tw-ring-color': 'var(--accent)' } as CSSProperties) : undefined}
+          >
+            <KpiCard
+              etykieta={`Poziom ${poziom} — przeterminowane`}
+              wartosc={formatujPLN(kpiPoziomy[poziom].przeterminowane)}
+              podpis={`${kpiPoziomy[poziom].liczbaPrzeterminowanych} pozycji`}
+              ikona={TriangleAlert}
+              ton={kpiPoziomy[poziom].przeterminowane > 0 ? 'ostrzezenie' : 'neutralny'}
+              dymek="Pozostaje dziś na dokumentach prolongaty, których termin już minął (status 'OTWARTA PRZETERMINOWANA')."
+            />
+          </div>
         ))}
       </div>
 
@@ -229,6 +309,8 @@ export function Prolongaty() {
           domyslneSortowanie={{ id: 'sumaPozostaje', desc: true }}
           wierszKlucz={(r) => r.kntKlucz}
           onKlikWiersza={(r) => setKntWybrany(kntWybrany === r.kntKlucz ? null : r.kntKlucz)}
+          podsumowanie={podsumowanieKontrahentow}
+          rozmiarStrony={10}
         />
       </div>
 
@@ -297,6 +379,8 @@ export function Prolongaty() {
           kolumny={kolumnyDokumentow}
           domyslneSortowanie={{ id: 'pozostajeDzis', desc: true }}
           wierszKlucz={(r) => `${r.prlnId}-${r.rata}`}
+          podsumowanie={podsumowanieDokumentow}
+          rozmiarStrony={10}
         />
       </div>
     </div>

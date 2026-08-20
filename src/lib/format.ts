@@ -10,8 +10,8 @@ const formatterPLNGrosze = new Intl.NumberFormat('pl-PL', {
 });
 
 /** Grosze (int) -> "12 345 zl" (bez groszy - naglowki KPI, wykresy). */
-export function formatujPLN(grosze: number): string {
-  return formatterPLN.format(grosze / 100);
+export function formatujPLN(grosze: number | null | undefined): string {
+  return formatterPLN.format((grosze ?? 0) / 100);
 }
 
 /** Grosze (int) -> "12 345,67 zl" (z groszami - tabele, drill-down). */
@@ -38,8 +38,12 @@ const formatterData = new Intl.DateTimeFormat('pl-PL', {
   timeZone: 'UTC',
 });
 
-export function formatujDni(dni: number | null): string {
-  if (dni === null) return '—';
+/**
+ * `undefined` obslugiwane obok `null`, zeby starsze zbuforowane JSON-y (sprzed
+ * dodania nowego pola na koncu krotki) nie wywalaly RangeError zamiast pokazac "-".
+ */
+export function formatujDni(dni: number | null | undefined): string {
+  if (dni == null) return '—';
   return formatterData.format(dniNaDate(dni));
 }
 

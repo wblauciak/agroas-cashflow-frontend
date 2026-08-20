@@ -138,6 +138,10 @@ export type ProlongataRow = [
   dataZaplaty: number | null,
   dniOpoznienia: number | null,
   koszt: number,
+  terminPierwotny: number | null,
+  stopaProcentowa: number | null,
+  dniZwlokiPierwotne: number | null,
+  kwotaOdsetek: number,
 ];
 
 export interface Prolongata {
@@ -155,6 +159,11 @@ export interface Prolongata {
   dataZaplaty: number | null;
   dniOpoznieniaPoProlongacie: number | null;
   kosztDokumentuProlongaty: number;
+  /** Termin platnosci oryginalnej faktury, sprzed tej prolongaty. */
+  terminPierwotny: number | null;
+  stopaProcentowa: number | null;
+  dniZwlokiPierwotne: number | null;
+  kwotaOdsetek: number;
 }
 
 export interface KompensatyFile {

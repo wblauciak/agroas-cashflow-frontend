@@ -82,6 +82,10 @@ export function dekodujProlongate(r: ProlongataRow, statusy: ProlongatyFile['slo
     dataZaplaty: r[11],
     dniOpoznieniaPoProlongacie: r[12],
     kosztDokumentuProlongaty: r[13],
+    terminPierwotny: r[14],
+    stopaProcentowa: r[15],
+    dniZwlokiPierwotne: r[16],
+    kwotaOdsetek: r[17],
   };
 }
 

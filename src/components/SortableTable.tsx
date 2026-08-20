@@ -1,4 +1,5 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface Kolumna<T> {
   id: string;
@@ -17,14 +18,21 @@ export function SortableTable<T>({
   domyslneSortowanie,
   wierszKlucz,
   onKlikWiersza,
+  podsumowanie,
+  rozmiarStrony,
 }: {
   dane: T[];
   kolumny: Kolumna<T>[];
   domyslneSortowanie: { id: string; desc: boolean };
   wierszKlucz: (row: T) => string | number;
   onKlikWiersza?: (row: T) => void;
+  /** Wiersz sum/podsumowania pod tabela, kluczowany id kolumny. */
+  podsumowanie?: Partial<Record<string, ReactNode>>;
+  /** Gdy podane - tabela dzieli sie na strony po tyle wierszy, z nawigacja pod spodem. */
+  rozmiarStrony?: number;
 }) {
   const [sortowanie, setSortowanie] = useState(domyslneSortowanie);
+  const [strona, setStrona] = useState(1);
 
   const posortowane = useMemo(() => {
     const kolumna = kolumny.find((k) => k.id === sortowanie.id);
@@ -40,6 +48,15 @@ export function SortableTable<T>({
     });
     return kopia;
   }, [dane, kolumny, sortowanie]);
+
+  const liczbaStron = rozmiarStrony ? Math.max(1, Math.ceil(posortowane.length / rozmiarStrony)) : 1;
+
+  // Filtr/sortowanie mogly zmniejszyc liczbe stron ponizej biezacej - wroc na 1.
+  useEffect(() => {
+    setStrona(1);
+  }, [dane, sortowanie, rozmiarStrony]);
+
+  const widoczne = rozmiarStrony ? posortowane.slice((strona - 1) * rozmiarStrony, strona * rozmiarStrony) : posortowane;
 
   function klikNaglowek(id: string) {
     setSortowanie((s) => (s.id === id ? { id, desc: !s.desc } : { id, desc: true }));
@@ -68,7 +85,7 @@ export function SortableTable<T>({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-          {posortowane.map((row) => (
+          {widoczne.map((row) => (
             <tr
               key={wierszKlucz(row)}
               onClick={onKlikWiersza ? () => onKlikWiersza(row) : undefined}
@@ -85,9 +102,51 @@ export function SortableTable<T>({
             </tr>
           ))}
         </tbody>
+        {podsumowanie && dane.length > 0 && (
+          <tfoot>
+            <tr className="border-t-2 border-slate-200 bg-slate-50 font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+              {kolumny.map((k) => (
+                <td
+                  key={k.id}
+                  className={`whitespace-nowrap px-4 py-2.5 ${k.wyrownanie === 'prawo' ? 'text-right' : 'text-left'}`}
+                >
+                  {podsumowanie[k.id] ?? ''}
+                </td>
+              ))}
+            </tr>
+          </tfoot>
+        )}
       </table>
       {dane.length === 0 && (
         <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Brak danych do pokazania.</div>
+      )}
+      {rozmiarStrony && posortowane.length > 0 && (
+        <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2.5 dark:border-slate-800">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {(strona - 1) * rozmiarStrony + 1}–{Math.min(strona * rozmiarStrony, posortowane.length)} z {posortowane.length}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setStrona((s) => Math.max(1, s - 1))}
+              disabled={strona === 1}
+              aria-label="Poprzednia strona"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800"
+            >
+              <ChevronLeft size={16} strokeWidth={2} />
+            </button>
+            <span className="text-xs text-slate-600 dark:text-slate-300">
+              strona {strona} z {liczbaStron}
+            </span>
+            <button
+              onClick={() => setStrona((s) => Math.min(liczbaStron, s + 1))}
+              disabled={strona === liczbaStron}
+              aria-label="Następna strona"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800"
+            >
+              <ChevronRight size={16} strokeWidth={2} />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
