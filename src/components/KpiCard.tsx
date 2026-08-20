@@ -52,6 +52,7 @@ export function KpiCard({
   dymek,
   ikona: Ikona,
   delta,
+  kancelaria,
 }: {
   etykieta: string;
   wartosc: string;
@@ -60,6 +61,8 @@ export function KpiCard({
   dymek?: ReactNode;
   ikona?: ComponentType<{ size?: number; strokeWidth?: number }>;
   delta?: Delta;
+  /** Kwota (sformatowana) z dokumentow kontrahentow przekazanych do kancelarii - pokazana jako osobna pigulka. */
+  kancelaria?: string;
 }) {
   const styl = TON_STYL[ton];
 
@@ -83,10 +86,18 @@ export function KpiCard({
       <div className={`mt-3 overflow-hidden text-ellipsis whitespace-nowrap text-right text-xl font-semibold tracking-tight tabular-nums ${styl.tekst}`}>
         {wartosc}
       </div>
-      {(podpis || delta) && (
+      {(podpis || delta || kancelaria) && (
         <div className="mt-2.5 flex flex-wrap items-center justify-end gap-1.5">
           {podpis && <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${styl.pigulka}`}>{podpis}</span>}
           {delta && <PigulkaDelty delta={delta} />}
+          {kancelaria && (
+            <span
+              className="inline-block rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+              title="Kwota z dokumentów kontrahentów przekazanych do kancelarii prawnej (windykacja sądowa/komornicza)"
+            >
+              w tym kancelaria: {kancelaria}
+            </span>
+          )}
         </div>
       )}
     </div>

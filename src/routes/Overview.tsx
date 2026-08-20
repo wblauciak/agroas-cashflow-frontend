@@ -16,6 +16,11 @@ interface Horyzont {
   przeterminowaneDo14: number;
   przeterminowaneDo30: number;
   przeterminowanePowyzej30: number;
+  /** Podzbior powyzszych - tylko kontrahenci przekazani do kancelarii prawnej. */
+  kancelariaDo7: number;
+  kancelariaDo14: number;
+  kancelariaDo30: number;
+  kancelariaPowyzej30: number;
   kolejne7Dni: number[];
 }
 
@@ -29,8 +34,17 @@ function pustyHoryzont(): Horyzont {
     przeterminowaneDo14: 0,
     przeterminowaneDo30: 0,
     przeterminowanePowyzej30: 0,
+    kancelariaDo7: 0,
+    kancelariaDo14: 0,
+    kancelariaDo30: 0,
+    kancelariaPowyzej30: 0,
     kolejne7Dni: new Array(7).fill(0),
   };
+}
+
+/** Suma wszystkich kwot z kontrahentow w kancelarii w rozlacznych przedzialach przeterminowania - rowna sie "ogolem w kancelarii". */
+function kancelariaOgolem(h: Horyzont): number {
+  return h.kancelariaDo7 + h.kancelariaDo14 + h.kancelariaDo30 + h.kancelariaPowyzej30;
 }
 
 function procent(czesc: number, calosc: number): string {
@@ -180,6 +194,7 @@ function SekcjaHoryzontow({
           ton="zly"
           ikona={TriangleAlert}
           delta={delta}
+          kancelaria={horyzont && kancelariaOgolem(horyzont) > 0 ? formatujPLN(kancelariaOgolem(horyzont)) : undefined}
         />
         <KpiCard
           etykieta="Przeterminowane do 7 dni"
@@ -187,6 +202,7 @@ function SekcjaHoryzontow({
           ton="zly"
           ikona={TriangleAlert}
           dymek="Przeterminowane od 1 do 7 dni. Rozłączny przedział — te cztery karty sumują się dokładnie do 'Przeterminowanych ogółem'."
+          kancelaria={horyzont && horyzont.kancelariaDo7 > 0 ? formatujPLN(horyzont.kancelariaDo7) : undefined}
         />
         <KpiCard
           etykieta="Przeterminowane do 14 dni"
@@ -194,6 +210,7 @@ function SekcjaHoryzontow({
           ton="zly"
           ikona={TriangleAlert}
           dymek="Przeterminowane od 8 do 14 dni (bez tych z karty 'do 7 dni')."
+          kancelaria={horyzont && horyzont.kancelariaDo14 > 0 ? formatujPLN(horyzont.kancelariaDo14) : undefined}
         />
         <KpiCard
           etykieta="Przeterminowane do 30 dni"
@@ -201,6 +218,7 @@ function SekcjaHoryzontow({
           ton="zly"
           ikona={TriangleAlert}
           dymek="Przeterminowane od 15 do 30 dni (bez tych z kart 'do 7' i 'do 14 dni')."
+          kancelaria={horyzont && horyzont.kancelariaDo30 > 0 ? formatujPLN(horyzont.kancelariaDo30) : undefined}
         />
         <KpiCard
           etykieta="Przeterminowane powyżej 30 dni"
@@ -208,6 +226,7 @@ function SekcjaHoryzontow({
           ton="zly"
           ikona={TriangleAlert}
           dymek="Ponad miesiąc po terminie — najpoważniejsza część zaległości, kandydat do windykacji."
+          kancelaria={horyzont && horyzont.kancelariaPowyzej30 > 0 ? formatujPLN(horyzont.kancelariaPowyzej30) : undefined}
         />
       </div>
     </section>
@@ -264,12 +283,16 @@ export function Overview() {
         if (p.dni >= -180) h.w180 += p.pozostajePLN;
       } else if (p.dni <= 7) {
         h.przeterminowaneDo7 += p.pozostajePLN;
+        if (p.kontrahentKancelaria) h.kancelariaDo7 += p.pozostajePLN;
       } else if (p.dni <= 14) {
         h.przeterminowaneDo14 += p.pozostajePLN;
+        if (p.kontrahentKancelaria) h.kancelariaDo14 += p.pozostajePLN;
       } else if (p.dni <= 30) {
         h.przeterminowaneDo30 += p.pozostajePLN;
+        if (p.kontrahentKancelaria) h.kancelariaDo30 += p.pozostajePLN;
       } else {
         h.przeterminowanePowyzej30 += p.pozostajePLN;
+        if (p.kontrahentKancelaria) h.kancelariaPowyzej30 += p.pozostajePLN;
       }
     }
     return { nal, zob };
