@@ -119,6 +119,7 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
         wartosc: (r) => r.pozostajePLN,
         cell: (r) => <span className="font-medium tabular-nums">{formatujPLN(r.pozostajePLN)}</span>,
         eksport: (r) => formatujPLN(r.pozostajePLN),
+        eksportCsv: (r) => r.pozostajePLN / 100,
         szerokosc: 150,
         wyrownanie: 'prawo',
       },
@@ -136,7 +137,7 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
     pobierzCsv(
       `${kierunek === 'NALEZNOSC' ? 'naleznosci' : 'zobowiazania'}-${new Date().toISOString().slice(0, 10)}.csv`,
       kolumny.map((k) => k.naglowek),
-      dokumenty.map((r) => kolumny.map((k) => (k.eksport ?? k.wartosc)(r))),
+      dokumenty.map((r) => kolumny.map((k) => (k.eksportCsv ?? k.eksport ?? k.wartosc)(r))),
     );
   }
 

@@ -7,12 +7,20 @@ export interface Kolumna<T> {
   wartosc: (row: T) => string | number | null;
   cell?: (row: T) => ReactNode;
   /**
-   * Tekst do eksportu CSV, gdy `wartosc` jest surowa liczba do sortowania
-   * (np. dni-od-epoki, grosze) rozna od tego, co widac na ekranie w `cell`.
-   * Domyslnie (brak `eksport`) CSV bierze `wartosc` - ustawic `eksport`
-   * wszedzie tam, gdzie `cell` pokazuje cos innego niz surowa `wartosc`.
+   * Tekst do tooltipu (VirtualTable) i domyslnie do CSV, gdy `wartosc` jest
+   * surowa liczba do sortowania (np. dni-od-epoki, grosze) rozna od tego,
+   * co widac na ekranie w `cell`. Domyslnie (brak `eksport`) CSV/tooltip
+   * biora `wartosc` - ustawic `eksport` wszedzie tam, gdzie `cell` pokazuje
+   * cos innego niz surowa `wartosc`.
    */
   eksport?: (row: T) => string | number | null;
+  /**
+   * Liczba do eksportu CSV, gdy kolumna ma byc sumowalna w Excelu (np.
+   * kwoty PLN) - priorytet nad `eksport` WYLACZNIE w CSV (tooltip nadal
+   * uzywa `eksport`, bo tam liczy sie czytelnosc z jednostka, nie
+   * sumowalnosc). Bez jednostki/formatowania tekstowego - sam numer.
+   */
+  eksportCsv?: (row: T) => number | null;
   /** Szerokosc w px (VirtualTable) - kolumny bez tego rosna, wypelniajac dostepna przestrzen. */
   szerokosc?: number;
   /** Wyrownanie do prawej - dla kolumn liczbowych/dat, zeby dobrze sie czytaly w kolumnie. */

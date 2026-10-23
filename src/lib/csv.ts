@@ -1,5 +1,12 @@
 function escapujPole(v: unknown): string {
-  const s = v === null || v === undefined ? '' : String(v);
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'number') {
+    // Separator pol to srednik (nie przecinek), wiec liczby moga uzywac przecinka
+    // jako separatora dziesietnego - tak jak oczekuje polski Excel. Bez grupowania
+    // tysiecy, zeby uniknac dwuznacznosci przy imporcie.
+    return v.toLocaleString('pl-PL', { maximumFractionDigits: 2, useGrouping: false });
+  }
+  const s = String(v);
   return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
