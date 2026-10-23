@@ -120,11 +120,12 @@ export function VirtualTable<T>({
                 >
                   {kolumny.map((k) => {
                     const surowa = k.wartosc(row);
+                    const dymek = k.eksport ? k.eksport(row) : surowa;
                     return (
                       <div
                         key={k.id}
                         style={stylKolumny(k)}
-                        title={surowa === null ? undefined : String(surowa)}
+                        title={dymek === null ? undefined : String(dymek)}
                         className={`flex items-center overflow-hidden text-ellipsis whitespace-nowrap px-3 ${
                           k.wyrownanie === 'prawo' ? 'justify-end' : ''
                         }`}
