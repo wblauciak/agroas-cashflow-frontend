@@ -133,9 +133,23 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
   if (meta.isLoading || otwarte.isLoading) return <StanZapytania stan="ladowanie" />;
   if (meta.isError || otwarte.isError) return <StanZapytania stan="blad" />;
 
-  function eksportujCsv() {
+  const nazwaBazowa = kierunek === 'NALEZNOSC' ? 'naleznosci' : 'zobowiazania';
+  const dzisiaj = new Date().toISOString().slice(0, 10);
+
+  function eksportujCsvMacierz() {
     pobierzCsv(
-      `${kierunek === 'NALEZNOSC' ? 'naleznosci' : 'zobowiazania'}-${new Date().toISOString().slice(0, 10)}.csv`,
+      `${nazwaBazowa}-grupy-terminy-${dzisiaj}.csv`,
+      ['Grupa produktowa', ...PASMA.map((p) => p.etykieta), 'Razem'],
+      [
+        ...wierszeBranz.map(({ idx, nazwa }) => [nazwa, ...PASMA.map((_, i) => macierz[idx][i] / 100), sumyBranz[idx] / 100]),
+        ['Razem', ...sumyPasm.map((v) => v / 100), sumaCalkowita / 100],
+      ],
+    );
+  }
+
+  function eksportujCsvDokumenty() {
+    pobierzCsv(
+      `${nazwaBazowa}-dokumenty-${dzisiaj}.csv`,
       kolumny.map((k) => k.naglowek),
       dokumenty.map((r) => kolumny.map((k) => (k.eksportCsv ?? k.eksport ?? k.wartosc)(r))),
     );
@@ -162,7 +176,7 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
             ukryj klientów w windykacji (kancelaria)
           </label>
           <button
-            onClick={eksportujCsv}
+            onClick={eksportujCsvMacierz}
             className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
             style={{ background: akcent }}
           >
@@ -270,6 +284,14 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {dokumenty.length} z {platnosci.length} pozycji
           </p>
+          <button
+            onClick={eksportujCsvDokumenty}
+            className="ml-auto flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+            style={{ background: akcent }}
+          >
+            <Download size={16} strokeWidth={2} />
+            Eksportuj CSV
+          </button>
         </div>
         <VirtualTable
           dane={dokumenty}
