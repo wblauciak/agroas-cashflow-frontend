@@ -17,6 +17,7 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
 
   const [pokazWszystkie, setPokazWszystkie] = useState(false);
   const [ukryjKancelarie, setUkryjKancelarie] = useState(false);
+  const [ukryjPowiazane, setUkryjPowiazane] = useState(false);
   const [szukaj, setSzukaj] = useState('');
   const [branzaWybrana, setBranzaWybrana] = useState<number | null>(null);
   const [pasmoWybrane, setPasmoWybrane] = useState<number | null>(null);
@@ -27,8 +28,9 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
       .map((r) => dekodujPlatnosc(r, otwarte.data!.slowniki))
       .filter((p) => p.kierunek === kierunek)
       .filter((p) => pokazWszystkie || p.kategoria === 'HANDLOWY')
-      .filter((p) => !ukryjKancelarie || !p.kontrahentKancelaria);
-  }, [otwarte.data, kierunek, pokazWszystkie, ukryjKancelarie]);
+      .filter((p) => !ukryjKancelarie || !p.kontrahentKancelaria)
+      .filter((p) => !ukryjPowiazane || !p.kontrahentPowiazany);
+  }, [otwarte.data, kierunek, pokazWszystkie, ukryjKancelarie, ukryjPowiazane]);
 
   const branze = otwarte.data?.slowniki.brn ?? [];
 
@@ -91,6 +93,14 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
                 title="Kontrahent w windykacji sądowej/komorniczej przez kancelarię prawną"
               >
                 Kancelaria
+              </span>
+            )}
+            {r.kontrahentPowiazany && (
+              <span
+                className="shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                title="Podmiot powiązany z grupą AGROAS (centrala w ERP wskazuje na AGROAS sp. z o.o.)"
+              >
+                Powiązany
               </span>
             )}
           </span>
@@ -174,6 +184,10 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
           <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300" title="Kontrahenci z otwartą sprawą sądową/komorniczą przez kancelarię prawną — nie są aktywnym zadłużeniem operacyjnym">
             <input type="checkbox" checked={ukryjKancelarie} onChange={(e) => setUkryjKancelarie(e.target.checked)} />
             ukryj klientów w windykacji (kancelaria)
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300" title="Kontrahenci powiązani z grupą AGROAS (centrala w ERP wskazuje na AGROAS sp. z o.o.)">
+            <input type="checkbox" checked={ukryjPowiazane} onChange={(e) => setUkryjPowiazane(e.target.checked)} />
+            ukryj podmioty powiązane z AGROAS
           </label>
           <button
             onClick={eksportujCsvMacierz}

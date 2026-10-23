@@ -113,6 +113,7 @@ export interface Platnosc {
   jestProlongata: boolean;
   kontrahentZablokowany: boolean;
   kontrahentKancelaria: boolean;
+  kontrahentPowiazany: boolean;
   branza: number | Array<[number, number]>;
 }
 
@@ -221,6 +222,7 @@ export const FLAGA_SPLIT_PAYMENT = 2;
 export const FLAGA_PROLONGATA = 4;
 export const FLAGA_KONTRAHENT_ZABLOKOWANY = 8;
 export const FLAGA_KONTRAHENT_KANCELARIA = 16;
+export const FLAGA_KONTRAHENT_POWIAZANY = 32;
 
 export const KATEGORIA_NAZWY = ['HANDLOWY', 'PODATKI', 'KASA_BANK', 'PROLONGATA'] as const;
 export const KIERUNEK_NAZWY = ['ZOBOWIAZANIE', 'NALEZNOSC'] as const;

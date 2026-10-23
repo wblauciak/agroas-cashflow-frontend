@@ -23,6 +23,7 @@ export function Rozrachunki() {
   const [kierunek, setKierunek] = useState<'wszystkie' | 'NALEZNOSC' | 'ZOBOWIAZANIE'>('wszystkie');
   const [pokazPodatkiKasa, setPokazPodatkiKasa] = useState(false);
   const [ukryjKancelarie, setUkryjKancelarie] = useState(false);
+  const [ukryjPowiazane, setUkryjPowiazane] = useState(false);
   const [branzaFiltr, setBranzaFiltr] = useState<string>('wszystkie');
 
   const wszystkiePlatnosci = useMemo(() => {
@@ -38,6 +39,7 @@ export function Rozrachunki() {
       if (kierunek !== 'wszystkie' && p.kierunek !== kierunek) return false;
       if (!pokazPodatkiKasa && (p.kategoria === 'PODATKI' || p.kategoria === 'KASA_BANK')) return false;
       if (ukryjKancelarie && p.kontrahentKancelaria) return false;
+      if (ukryjPowiazane && p.kontrahentPowiazany) return false;
       if (branzaFiltr !== 'wszystkie') {
         const idx = Number(branzaFiltr);
         const naleźy = typeof p.branza === 'number' ? p.branza === idx : p.branza.some(([b]) => b === idx);
@@ -50,7 +52,7 @@ export function Rozrachunki() {
       }
       return true;
     });
-  }, [wszystkiePlatnosci, kierunek, pokazPodatkiKasa, ukryjKancelarie, branzaFiltr, szukaj, otwarte.data]);
+  }, [wszystkiePlatnosci, kierunek, pokazPodatkiKasa, ukryjKancelarie, ukryjPowiazane, branzaFiltr, szukaj, otwarte.data]);
 
   const kolumny: Kolumna<Platnosc>[] = useMemo(
     () => [
@@ -67,6 +69,14 @@ export function Rozrachunki() {
                 title="Kontrahent w windykacji sądowej/komorniczej przez kancelarię prawną"
               >
                 Kancelaria
+              </span>
+            )}
+            {r.kontrahentPowiazany && (
+              <span
+                className="shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                title="Podmiot powiązany z grupą AGROAS (centrala w ERP wskazuje na AGROAS sp. z o.o.)"
+              >
+                Powiązany
               </span>
             )}
           </span>
@@ -190,6 +200,10 @@ export function Rozrachunki() {
         <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300" title="Kontrahenci z otwartą sprawą sądową/komorniczą przez kancelarię prawną — nie są aktywnym zadłużeniem operacyjnym">
           <input type="checkbox" checked={ukryjKancelarie} onChange={(e) => setUkryjKancelarie(e.target.checked)} />
           ukryj klientów w windykacji (kancelaria)
+        </label>
+        <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300" title="Kontrahenci powiązani z grupą AGROAS (centrala w ERP wskazuje na AGROAS sp. z o.o.)">
+          <input type="checkbox" checked={ukryjPowiazane} onChange={(e) => setUkryjPowiazane(e.target.checked)} />
+          ukryj podmioty powiązane z AGROAS
         </label>
       </div>
 

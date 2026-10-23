@@ -1,5 +1,6 @@
 import {
   FLAGA_KONTRAHENT_KANCELARIA,
+  FLAGA_KONTRAHENT_POWIAZANY,
   FLAGA_KONTRAHENT_ZABLOKOWANY,
   FLAGA_PROLONGATA,
   FLAGA_SPLIT_PAYMENT,
@@ -42,6 +43,7 @@ export function dekodujPlatnosc(r: OtwarteRow, slowniki: OtwarteSlowniki): Platn
     jestProlongata: (r[19] & FLAGA_PROLONGATA) !== 0,
     kontrahentZablokowany: (r[19] & FLAGA_KONTRAHENT_ZABLOKOWANY) !== 0,
     kontrahentKancelaria: (r[19] & FLAGA_KONTRAHENT_KANCELARIA) !== 0,
+    kontrahentPowiazany: (r[19] & FLAGA_KONTRAHENT_POWIAZANY) !== 0,
     branza: r[20],
   };
 }
