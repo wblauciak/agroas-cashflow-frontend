@@ -103,13 +103,22 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
         wartosc: (r) => (typeof r.branza === 'number' ? (branze[r.branza] ?? '—') : 'wielobranżowy'),
         szerokosc: 170,
       },
-      { id: 'termin', naglowek: 'Termin', wartosc: (r) => r.termin, cell: (r) => formatujDni(r.termin), szerokosc: 110, wyrownanie: 'prawo' },
+      {
+        id: 'termin',
+        naglowek: 'Termin',
+        wartosc: (r) => r.termin,
+        cell: (r) => formatujDni(r.termin),
+        eksport: (r) => formatujDni(r.termin),
+        szerokosc: 110,
+        wyrownanie: 'prawo',
+      },
       { id: 'dni', naglowek: 'Dni po terminie', wartosc: (r) => r.dni ?? 0, szerokosc: 130, wyrownanie: 'prawo' },
       {
         id: 'pozostajePLN',
         naglowek: 'Pozostaje (PLN)',
         wartosc: (r) => r.pozostajePLN,
         cell: (r) => <span className="font-medium tabular-nums">{formatujPLN(r.pozostajePLN)}</span>,
+        eksport: (r) => formatujPLN(r.pozostajePLN),
         szerokosc: 150,
         wyrownanie: 'prawo',
       },
@@ -127,7 +136,7 @@ export function KierunekSzczegoly({ kierunek, kolor }: { kierunek: 'NALEZNOSC' |
     pobierzCsv(
       `${kierunek === 'NALEZNOSC' ? 'naleznosci' : 'zobowiazania'}-${new Date().toISOString().slice(0, 10)}.csv`,
       kolumny.map((k) => k.naglowek),
-      dokumenty.map((r) => kolumny.map((k) => k.wartosc(r))),
+      dokumenty.map((r) => kolumny.map((k) => (k.eksport ?? k.wartosc)(r))),
     );
   }
 

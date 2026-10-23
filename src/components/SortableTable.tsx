@@ -6,6 +6,13 @@ export interface Kolumna<T> {
   naglowek: string;
   wartosc: (row: T) => string | number | null;
   cell?: (row: T) => ReactNode;
+  /**
+   * Tekst do eksportu CSV, gdy `wartosc` jest surowa liczba do sortowania
+   * (np. dni-od-epoki, grosze) rozna od tego, co widac na ekranie w `cell`.
+   * Domyslnie (brak `eksport`) CSV bierze `wartosc` - ustawic `eksport`
+   * wszedzie tam, gdzie `cell` pokazuje cos innego niz surowa `wartosc`.
+   */
+  eksport?: (row: T) => string | number | null;
   /** Szerokosc w px (VirtualTable) - kolumny bez tego rosna, wypelniajac dostepna przestrzen. */
   szerokosc?: number;
   /** Wyrownanie do prawej - dla kolumn liczbowych/dat, zeby dobrze sie czytaly w kolumnie. */

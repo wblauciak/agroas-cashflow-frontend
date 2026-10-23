@@ -77,6 +77,7 @@ export function Rozrachunki() {
         id: 'kierunek',
         naglowek: 'Kierunek',
         wartosc: (r) => r.kierunek,
+        eksport: (r) => (r.kierunek === 'NALEZNOSC' ? 'Należność' : 'Zobowiązanie'),
         szerokosc: 130,
         cell: (r) => (
           <span
@@ -91,14 +92,30 @@ export function Rozrachunki() {
         ),
       },
       { id: 'kategoria', naglowek: 'Kategoria', wartosc: (r) => r.kategoria, szerokosc: 120 },
-      { id: 'kubelek', naglowek: 'Kubełek', wartosc: (r) => r.kubelekLp, cell: (r) => KUBELEK_NAZWY[r.kubelekLp], szerokosc: 130 },
-      { id: 'termin', naglowek: 'Termin', wartosc: (r) => r.termin, cell: (r) => formatujDni(r.termin), szerokosc: 110, wyrownanie: 'prawo' },
+      {
+        id: 'kubelek',
+        naglowek: 'Kubełek',
+        wartosc: (r) => r.kubelekLp,
+        cell: (r) => KUBELEK_NAZWY[r.kubelekLp],
+        eksport: (r) => KUBELEK_NAZWY[r.kubelekLp],
+        szerokosc: 130,
+      },
+      {
+        id: 'termin',
+        naglowek: 'Termin',
+        wartosc: (r) => r.termin,
+        cell: (r) => formatujDni(r.termin),
+        eksport: (r) => formatujDni(r.termin),
+        szerokosc: 110,
+        wyrownanie: 'prawo',
+      },
       { id: 'dni', naglowek: 'Dni po terminie', wartosc: (r) => r.dni ?? 0, szerokosc: 130, wyrownanie: 'prawo' },
       {
         id: 'pozostajePLN',
         naglowek: 'Pozostaje (PLN)',
         wartosc: (r) => r.pozostajePLN,
         cell: (r) => <span className="font-medium tabular-nums">{formatujPLN(r.pozostajePLN)}</span>,
+        eksport: (r) => formatujPLN(r.pozostajePLN),
         szerokosc: 150,
         wyrownanie: 'prawo',
       },
@@ -116,7 +133,7 @@ export function Rozrachunki() {
     pobierzCsv(
       `rozrachunki-${new Date().toISOString().slice(0, 10)}.csv`,
       kolumny.map((k) => k.naglowek),
-      przefiltrowane.map((r) => kolumny.map((k) => k.wartosc(r))),
+      przefiltrowane.map((r) => kolumny.map((k) => (k.eksport ?? k.wartosc)(r))),
     );
   }
 
