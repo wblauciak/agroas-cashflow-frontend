@@ -143,6 +143,7 @@ export type ProlongataRow = [
   stopaProcentowa: number | null,
   dniZwlokiPierwotne: number | null,
   kwotaOdsetek: number,
+  podmiotPowiazany: 0 | 1,
 ];
 
 export interface Prolongata {
@@ -165,6 +166,7 @@ export interface Prolongata {
   stopaProcentowa: number | null;
   dniZwlokiPierwotne: number | null;
   kwotaOdsetek: number;
+  kontrahentPowiazany: boolean;
 }
 
 export interface KompensatyFile {
@@ -185,6 +187,7 @@ export type KompensataRow = [
   potencjal: number,
   potencjalDo30Dni: number,
   potencjalWymagalny: number,
+  powiazany: 0 | 1,
 ];
 
 export interface Kompensata {
@@ -199,6 +202,7 @@ export interface Kompensata {
   potencjalKompensaty: number;
   potencjalDo30Dni: number;
   potencjalWymagalny: number;
+  podmiotPowiazany: boolean;
 }
 
 export interface SnapshotIndex {

@@ -7,8 +7,29 @@ import { formatujPLN } from '../lib/format';
 import { SortableTable, type Kolumna } from '../components/SortableTable';
 import { StanZapytania } from '../components/StanZapytania';
 
+function BadgePowiazany() {
+  return (
+    <span
+      className="shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+      title="Podmiot powiązany z grupą AGROAS (centrala w ERP wskazuje na AGROAS sp. z o.o.)"
+    >
+      Powiązany
+    </span>
+  );
+}
+
 const KOLUMNY: Kolumna<Kompensata>[] = [
-  { id: 'nazwa', naglowek: 'Podmiot', wartosc: (r) => r.nazwa },
+  {
+    id: 'nazwa',
+    naglowek: 'Podmiot',
+    wartosc: (r) => r.nazwa,
+    cell: (r) => (
+      <span className="flex min-w-0 items-center gap-1.5">
+        <span className="truncate">{r.nazwa}</span>
+        {r.podmiotPowiazany && <BadgePowiazany />}
+      </span>
+    ),
+  },
   { id: 'liczbaKart', naglowek: 'Kart', wartosc: (r) => r.liczbaKart },
   { id: 'pozycjiN', naglowek: 'Poz. N', wartosc: (r) => r.pozycjiN },
   { id: 'pozycjiZ', naglowek: 'Poz. Z', wartosc: (r) => r.pozycjiZ },
@@ -39,7 +60,10 @@ function KompensataCard({ r }: { r: Kompensata }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-md transition-shadow hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-semibold text-slate-900 dark:text-slate-100">{r.nazwa}</h3>
+        <h3 className="flex min-w-0 items-center gap-1.5 font-semibold text-slate-900 dark:text-slate-100">
+          <span className="truncate">{r.nazwa}</span>
+          {r.podmiotPowiazany && <BadgePowiazany />}
+        </h3>
         {r.liczbaKart > 1 && (
           <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
             {r.liczbaKart} kart
@@ -80,12 +104,14 @@ export function Kompensaty() {
   const meta = useMeta();
   const kompensaty = useKompensaty(meta.data?.pliki.kompensaty);
   const [widok, setWidok] = useState<'tabela' | 'karty'>('tabela');
+  const [pokazTylkoPowiazane, setPokazTylkoPowiazane] = useState(false);
 
   if (meta.isLoading || kompensaty.isLoading) return <StanZapytania stan="ladowanie" />;
   if (meta.isError || kompensaty.isError) return <StanZapytania stan="blad" komunikat={(meta.error ?? kompensaty.error) instanceof Error ? (meta.error ?? kompensaty.error)!.message : undefined} />;
   if (!kompensaty.data) return null;
 
-  const dane = kompensaty.data.dane.map(dekodujKompensate);
+  const wszystkie = kompensaty.data.dane.map(dekodujKompensate);
+  const dane = pokazTylkoPowiazane ? wszystkie.filter((k) => k.podmiotPowiazany) : wszystkie;
   const daneKarty = [...dane].sort((a, b) => b.potencjalDo30Dni - a.potencjalDo30Dni);
 
   return (
@@ -95,6 +121,13 @@ export function Kompensaty() {
           Domyślnie sortowane po potencjale w horyzoncie 30 dni — sortowanie po kwocie łącznej wypycha z góry
           podmioty, których saldo zapada dopiero za miesiące.
         </p>
+        <label
+          className="flex shrink-0 items-center gap-2 text-sm text-slate-600 dark:text-slate-300"
+          title="Podmioty powiązane z grupą AGROAS (centrala w ERP wskazuje na AGROAS sp. z o.o.)"
+        >
+          <input type="checkbox" checked={pokazTylkoPowiazane} onChange={(e) => setPokazTylkoPowiazane(e.target.checked)} />
+          pokaż tylko podmioty powiązane z AGROAS
+        </label>
         <div className="flex shrink-0 gap-1 rounded-xl border border-slate-200 p-1 dark:border-slate-800">
           <button
             onClick={() => setWidok('tabela')}

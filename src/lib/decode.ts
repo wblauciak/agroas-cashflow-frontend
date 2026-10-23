@@ -88,6 +88,7 @@ export function dekodujProlongate(r: ProlongataRow, statusy: ProlongatyFile['slo
     stopaProcentowa: r[15],
     dniZwlokiPierwotne: r[16],
     kwotaOdsetek: r[17],
+    kontrahentPowiazany: r[18] === 1,
   };
 }
 
@@ -104,5 +105,6 @@ export function dekodujKompensate(r: KompensataRow): Kompensata {
     potencjalKompensaty: r[8],
     potencjalDo30Dni: r[9],
     potencjalWymagalny: r[10],
+    podmiotPowiazany: r[11] === 1,
   };
 }

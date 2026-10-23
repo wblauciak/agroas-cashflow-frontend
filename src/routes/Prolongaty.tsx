@@ -62,6 +62,18 @@ interface KontrahentRollup {
   sumaProlongowana: number;
   sumaPozostaje: number;
   sumaOdsetek: number;
+  kontrahentPowiazany: boolean;
+}
+
+function BadgePowiazany() {
+  return (
+    <span
+      className="shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+      title="Podmiot powiązany z grupą AGROAS (centrala w ERP wskazuje na AGROAS sp. z o.o.)"
+    >
+      Powiązany
+    </span>
+  );
 }
 
 export function Prolongaty() {
@@ -76,6 +88,7 @@ export function Prolongaty() {
   const [kntWybrany, setKntWybrany] = useState<number | null>(null);
   const [pokazRozliczone, setPokazRozliczone] = useState(false);
   const [tylkoPrzeterminowane, setTylkoPrzeterminowane] = useState(false);
+  const [pokazTylkoPowiazane, setPokazTylkoPowiazane] = useState(false);
 
   const dane = useMemo(() => {
     if (!prolongaty.data) return [];
@@ -137,6 +150,7 @@ export function Prolongaty() {
     return daneAktywne.filter((p) => {
       if (poziomFiltr !== 'wszystkie' && poziomBucket(p.nrProlongaty) !== poziomFiltr) return false;
       if (tylkoPrzeterminowane && p.status !== 'OTWARTA PRZETERMINOWANA') return false;
+      if (pokazTylkoPowiazane && !p.kontrahentPowiazany) return false;
       if (dataOdDni !== null && (p.terminPoProlongacie === null || p.terminPoProlongacie < dataOdDni)) return false;
       if (dataDoDni !== null && (p.terminPoProlongacie === null || p.terminPoProlongacie > dataDoDni)) return false;
       if (szukajLower) {
@@ -145,13 +159,14 @@ export function Prolongaty() {
       }
       return true;
     });
-  }, [daneAktywne, poziomFiltr, tylkoPrzeterminowane, dataOdDni, dataDoDni, szukaj, otwarte.data]);
+  }, [daneAktywne, poziomFiltr, tylkoPrzeterminowane, pokazTylkoPowiazane, dataOdDni, dataDoDni, szukaj, otwarte.data]);
 
   const kontrahenci = useMemo(() => {
     const mapa = new Map<number, KontrahentRollup>();
     for (const p of wgPoziomuIDaty) {
       const w =
-        mapa.get(p.kntKlucz) ?? { kntKlucz: p.kntKlucz, liczba: 0, maksPoziom: 0, sumaProlongowana: 0, sumaPozostaje: 0, sumaOdsetek: 0 };
+        mapa.get(p.kntKlucz) ??
+        { kntKlucz: p.kntKlucz, liczba: 0, maksPoziom: 0, sumaProlongowana: 0, sumaPozostaje: 0, sumaOdsetek: 0, kontrahentPowiazany: p.kontrahentPowiazany };
       w.liczba += 1;
       w.maksPoziom = Math.max(w.maksPoziom, p.nrProlongaty);
       w.sumaProlongowana += p.kwotaProlongowana;
@@ -169,7 +184,17 @@ export function Prolongaty() {
 
   const kolumnyKontrahentow: Kolumna<KontrahentRollup>[] = useMemo(
     () => [
-      { id: 'kontrahent', naglowek: 'Kontrahent', wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz) },
+      {
+        id: 'kontrahent',
+        naglowek: 'Kontrahent',
+        wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz),
+        cell: (r) => (
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate">{nazwaKontrahenta(otwarte.data, r.kntKlucz)}</span>
+            {r.kontrahentPowiazany && <BadgePowiazany />}
+          </span>
+        ),
+      },
       { id: 'liczba', naglowek: 'Pozycji', wartosc: (r) => r.liczba, wyrownanie: 'prawo' },
       { id: 'maksPoziom', naglowek: 'Maks. poziom', wartosc: (r) => r.maksPoziom, cell: (r) => <PoziomBadge nr={r.maksPoziom} /> },
       {
@@ -219,7 +244,17 @@ export function Prolongaty() {
 
   const kolumnyDokumentow: Kolumna<Prolongata>[] = useMemo(
     () => [
-      { id: 'kontrahent', naglowek: 'Kontrahent', wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz) },
+      {
+        id: 'kontrahent',
+        naglowek: 'Kontrahent',
+        wartosc: (r) => nazwaKontrahenta(otwarte.data, r.kntKlucz),
+        cell: (r) => (
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate">{nazwaKontrahenta(otwarte.data, r.kntKlucz)}</span>
+            {r.kontrahentPowiazany && <BadgePowiazany />}
+          </span>
+        ),
+      },
       { id: 'dok', naglowek: 'Dokument', wartosc: (r) => r.dok },
       { id: 'dokZrodlowy', naglowek: 'Dokument źródłowy', wartosc: (r) => r.dokZrodlowy ?? '—' },
       { id: 'nrProlongaty', naglowek: 'Poziom', wartosc: (r) => r.nrProlongaty, cell: (r) => <PoziomBadge nr={r.nrProlongaty} /> },
@@ -482,13 +517,18 @@ export function Prolongaty() {
             <input type="checkbox" checked={tylkoPrzeterminowane} onChange={(e) => setTylkoPrzeterminowane(e.target.checked)} />
             tylko przeterminowane
           </label>
-          {(poziomFiltr !== 'wszystkie' || filtrDatyAktywny || szukaj) && (
+          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300" title="Kontrahenci powiązani z grupą AGROAS (centrala w ERP wskazuje na AGROAS sp. z o.o.)">
+            <input type="checkbox" checked={pokazTylkoPowiazane} onChange={(e) => setPokazTylkoPowiazane(e.target.checked)} />
+            pokaż tylko podmioty powiązane z AGROAS
+          </label>
+          {(poziomFiltr !== 'wszystkie' || filtrDatyAktywny || szukaj || pokazTylkoPowiazane) && (
             <button
               onClick={() => {
                 setPoziomFiltr('wszystkie');
                 setDataOd('');
                 setDataDo('');
                 setSzukaj('');
+                setPokazTylkoPowiazane(false);
               }}
               className="text-xs font-medium text-slate-500 underline hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             >
